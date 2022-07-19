@@ -1,15 +1,20 @@
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <linux/types.h>
 #include <linux/capability.h>
 
-#define PROBE "capdump"
+#include <unistd.h>
+
+#define PROBE_NS "capdump_ns"
+#define PROBE_INODE "capdump_inode"
 #define ROOTPATH "/sys/kernel/debug/tracing"
 #define EVENTS ROOTPATH"/kprobe_events"
-#define PROBE_ENA ROOTPATH"/events/kprobes/"PROBE"/enable"
+#define PROBE_NS_ENA ROOTPATH"/events/kprobes/"PROBE_NS"/enable"
+#define PROBE_INODE_ENA ROOTPATH"/events/kprobes/"PROBE_INODE"/enable"
 #define LOG ROOTPATH"/trace"
 
 #define BUFSIZE 1000
@@ -65,61 +70,71 @@ const char *cap_to_str(__u16 cap)
 }
 
 
-int send_command(char *filename, char *string)
+int send_command(char *filename, char *string, bool append)
 {
-	FILE *f = fopen(filename, "w");
+	FILE *f;
+	if (append)
+		/* Using "a" gives "Invalid argument" from `probe_create`. Why?
+		 * Using "a+" works. Apparently "a+" is equivalent to shell
+		 * redirect append `>>`?
+		 */
+		f = fopen(filename, "a+");
+	else 
+		f = fopen(filename, "w");
+
 	printf("SENDING COMMAND\n");
 	if (!f)
-		return EBUSY;
+		return errno;
 	fprintf(f, "%s\n", string);
 	fclose(f);
 	printf("SENT COMMAND\n");
 	return 0;
 }
 
+// TODO: For all probe functions, handle errors correctly
+
 int probe_create()
 {
-	/*int err = send_command(EVENTS, "p:"PROBE" ns_capable cap=$arg2 comm=$comm\n");*/
-	int err = send_command(EVENTS, "p:"PROBE" cap_capable cap=$arg3 comm=$comm\n");
-	printf("%s\n", strerror(err));
-
+	/* Creating multiple probes requires appending to the file */
+	int err;
+	err = send_command(EVENTS, "p:"PROBE_NS" ns_capable cap=$arg2 comm=$comm\n", false);
+	err = send_command(EVENTS, "p:"PROBE_INODE" capable_wrt_inode_uidgid cap=$arg3 comm=$comm\n", true);
 	return err;
 }
 
 int probe_enable()
 {
-	return send_command(PROBE_ENA, "1");
+	send_command(PROBE_NS_ENA, "1", false);
+	return send_command(PROBE_INODE_ENA, "1", false);
 }
 
 int probe_disable()
 {
 
-	return send_command(PROBE_ENA, "0");
+	send_command(PROBE_NS_ENA, "0", false);
+	return send_command(PROBE_INODE_ENA, "0", false);
 }
 
 int probe_delete()
 {
-	/*system("echo -:capdump >> /sys/kernel/debug/tracing/kprobe_events");*/
-	FILE *f = fopen(EVENTS, "w");
-	if (!f)
-		return EBUSY;
-	fprintf(f, "-:%s\n", PROBE);
-	fclose(f);
-	return 0;
+	send_command(EVENTS, "-:"PROBE_NS, false);
+	return send_command(EVENTS, "-:"PROBE_INODE, false);
 }
 
 struct log_entry {
 	char comm[COMM_NAME_LEN];
-	__u32 pid;
-	__u64 time;
-	__u16 cap;
+	long long time;
+	int pid;
+	int cap;
 };
 
-int parse_line(char *line, int len, struct log_entry *entry)
+
+int parse_entry(char *line, int len, struct log_entry *entry)
 {
 	char *cap;
 	char *comm;
-	int comm_len;
+	char *opts;
+	int comm_len, err;
 
 	cap = strstr(line, "cap=");
 	if (!cap) {
@@ -128,11 +143,10 @@ int parse_line(char *line, int len, struct log_entry *entry)
 
 	cap += 6;
 	entry->cap = strtol(cap, NULL, 16);
-	/*printf("CAP: %s\n", cap_to_str(entry->cap));*/
 
-	comm = strstr(cap, "comm=");
+	comm = strstr(line, "comm=");
 	if (!comm) {
-		return EINVAL;
+		return 3;
 	}
 
 	comm += 6;
@@ -142,9 +156,6 @@ int parse_line(char *line, int len, struct log_entry *entry)
 
 	strncpy(entry->comm, comm, comm_len);
 	entry->comm[comm_len] = '\0';
-
-	/*printf("COMM: %s\n", entry->comm);*/
-
 
 	return 0;
 }
@@ -156,7 +167,6 @@ void print_log_entry(struct log_entry *entry)
 
 int probe_log()
 {
-	/*system("cat "LOG" | grep "PROBE);*/
 	char linebuffer[BUFSIZE];
 	struct log_entry entry;
 	FILE *logfile;
@@ -171,16 +181,15 @@ int probe_log()
 	if (!logfile)
 		return errno;
 
-	for (;;) {
+	while(true) {
 		while ((ch = getc(logfile)) != EOF)  {
-			/*if (putchar(ch) == EOF)*/
-				/*perror("Output error");*/
 
+			// TODO: Handle idx out of range in buffer?
 			linebuffer[pos] = ch;	
 			pos++;
 			if (ch == '\n') {
 				linebuffer[pos] = '\0';
-				err = parse_line(linebuffer, pos, &entry);
+				err = parse_entry(linebuffer, pos, &entry);
 				if (!err)
 					print_log_entry(&entry);
 				pos = 0;
@@ -189,15 +198,14 @@ int probe_log()
 		}
 
 		if (ferror(logfile)) {
-			printf("Input error: %s", strerror(errno));
+			printf("Error: %s", strerror(errno));
 			return errno;
 		}
 		(void)fflush(stdout);
-		/*sleep(1); // Or use select*/
 		second.tv_sec = 0;
-		second.tv_usec = 100000;
+		second.tv_usec = 100000; /* Sleep 1ms */
 		if (select(0, NULL, NULL, NULL, &second) == -1)
-			printf("Select: %s", strerror(errno));
+			printf("Error: %s", strerror(errno));
 		clearerr(logfile);
 	}
 
@@ -208,19 +216,13 @@ int main(int argc, char **argv)
 {
 	int err;
 	struct log_entry entry;
-
-
-	/*char *test = "         chronyd-879     [001] ..... 22849.242966: capdump: (cap_capable+0x0/0x70) cap=0x19 comm=\"chronyd\"";*/
-
-	/*parse_line(test, strlen(test), &entry);*/
-	/*return 0;*/
 	
 	if (strcmp(argv[1], "ena") == 0) {
-		printf("Enable %s\n", PROBE);
+		printf("Enable %s\n", PROBE_NS);
 
 		err = probe_create();
 		if (err)
-			// Error if probe already exists?
+			// TODO: Error if probe already exists?
 			return err;
 		printf("Created\n");
 
