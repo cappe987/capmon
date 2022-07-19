@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
 #include <linux/types.h>
 #include <linux/capability.h>
 
@@ -20,6 +21,16 @@
 #define BUFSIZE 1000
 #define COMM_NAME_LEN 16
 #define CAP_NAME_LEN 22
+
+#define DEBUG false
+
+#if DEBUG
+#define dbg(str, ...) printf(str, ##__VA_ARGS__)
+#else
+#define dbg(str, ...)
+#endif
+
+static volatile bool keep_running;
 
 const char *cap_to_str(__u16 cap)
 {
@@ -82,12 +93,12 @@ int send_command(char *filename, char *string, bool append)
 	else 
 		f = fopen(filename, "w");
 
-	printf("SENDING COMMAND\n");
+	dbg("SENDING COMMAND\n");
 	if (!f)
 		return errno;
 	fprintf(f, "%s\n", string);
 	fclose(f);
-	printf("SENT COMMAND\n");
+	dbg("SENT COMMAND\n");
 	return 0;
 }
 
@@ -115,7 +126,7 @@ int probe_disable()
 	return send_command(PROBE_INODE_ENA, "0", false);
 }
 
-int probe_delete()
+int probe_destroy()
 {
 	send_command(EVENTS, "-:"PROBE_NS, false);
 	return send_command(EVENTS, "-:"PROBE_INODE, false);
@@ -174,15 +185,17 @@ int probe_log()
 	struct timeval second;
 	char ch;
 
-	pos = 0;
+	second.tv_sec = 0;
+	second.tv_usec = 100000; /* Sleep 1ms */
 	counter = 0;
+	pos = 0;
 
 	logfile = fopen(LOG, "r");
 	if (!logfile)
 		return errno;
 
 	while(true) {
-		while ((ch = getc(logfile)) != EOF)  {
+		while ((ch = getc(logfile)) != EOF && keep_running)  {
 
 			// TODO: Handle idx out of range in buffer?
 			linebuffer[pos] = ch;	
@@ -197,55 +210,75 @@ int probe_log()
 			}
 		}
 
-		if (ferror(logfile)) {
-			printf("Error: %s", strerror(errno));
-			return errno;
-		}
-		(void)fflush(stdout);
-		second.tv_sec = 0;
-		second.tv_usec = 100000; /* Sleep 1ms */
-		if (select(0, NULL, NULL, NULL, &second) == -1)
-			printf("Error: %s", strerror(errno));
-		clearerr(logfile);
-	}
+		if (!keep_running)
+			break;
 
+		if (ferror(logfile)) {
+			break;
+		}
+		clearerr(logfile);
+		(void)fflush(stdout);
+
+		if (select(0, NULL, NULL, NULL, &second) == -1)
+			break;
+	}
 	fclose(logfile);
+	printf("\n");
+	return errno;
+}
+
+void sig_handler(int signo)
+{
+	keep_running = false;
 }
 
 int main(int argc, char **argv)
 {
 	int err;
 	struct log_entry entry;
-	
-	if (strcmp(argv[1], "ena") == 0) {
-		printf("Enable %s\n", PROBE_NS);
+
+	if (argc == 1) {
+		probe_create();
+		probe_enable();
+
+		keep_running = true;
+		signal(SIGINT, sig_handler);
+
+		printf("--- Capdump monitor mode ---\n");
+		probe_log();
+
+		probe_disable();
+		probe_destroy();
+
+	} else if (strcmp(argv[1], "ena") == 0) {
+		dbg("Enable %s\n", PROBE_NS);
 
 		err = probe_create();
 		if (err)
 			// TODO: Error if probe already exists?
 			return err;
-		printf("Created\n");
+		dbg("Created\n");
 
 		err = probe_enable();
 		if (err) {
-			probe_delete();
+			probe_destroy();
 			return err;
 		}
-		printf("Enabled\n");
+		dbg("Enabled\n");
 
 	} else if (strcmp(argv[1], "dis") == 0) {
-		printf("Disable\n");
+		dbg("Disable\n");
 		err = probe_disable();
 		if (err)
 			printf("Error: %s\n", strerror(err));
 
-		printf("Disabled\n");
-		err = probe_delete();
+		dbg("Disabled\n");
+		err = probe_destroy();
 		if (err) {
 			printf("Error: %s\n", strerror(err));
 			return err;
 		}
-		printf("Deleted\n");
+		dbg("Deleted\n");
 		return 0;
 
 	} else if (strcmp(argv[1], "log") == 0) {
@@ -253,10 +286,7 @@ int main(int argc, char **argv)
 
 	} else if (strcmp(argv[1], "clear") == 0) {
 		system("echo 0 > /sys/kernel/debug/tracing/trace");
-
-	} else {
-		printf("Invalid argument\n");
-	}
+	} 
 
 	return 0;
 }
