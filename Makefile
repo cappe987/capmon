@@ -1,17 +1,36 @@
 
 
+.DEFAULT_GOAL := all
 
-CC = gcc
+EXENAME=capmon
+IDIR =include
+CC=gcc
+CFLAGS=-I$(IDIR)
 
-OBJ = capdump.o
+#_DEPS = 
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-EXE = capdump
+ODIR=obj
+SDIR=src
+#LDIR =lib
+
+#LIBS=
+
+
+_OBJ = capmon.o capabilities.o kprobes.o
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+
+obj:
+	mkdir -p obj
+
+$(ODIR)/%.o: $(SDIR)/%.c $(DEPS) | obj
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 all: $(OBJ)
-	$(CC) $(OBJ) -o $(EXE)
+	$(CC) -o $(EXENAME) $^ $(CFLAGS) $(LIBS)
 
-
+.PHONY: clean
 clean:
-	rm $(OBJ)
-	rm $(EXE)
-
+	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~ $(LEXC)
+	rm -f $(EXENAME)
+	rmdir obj
