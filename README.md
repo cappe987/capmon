@@ -63,22 +63,25 @@ capmon itself uses `CAP_DAC_READ_SEARCH` and `CAP_DAC_AUDIT_WRITE`?
 Alternatively, `CAP_DAC_OVERRIDE`.
 
 # To-do list
+- Add CMake build system
 - Filter by comm name, cap, pid
 - Check for possible out of range indexing in the code
 - Summary mode - based on pid or comm
 - Return value of cap check?
+- Create first release
 
 # Issues
 - Killing it with SIGKILL will leave the kprobes active. Can be removed with
   `capmon --disable`.
 - If starting with sudo, it will not properly exit if sudo timeout is reached
-  (i.e. when you need to enter your password again). `Interrupted system call`
+  (i.e. when you need to enter your password again). `Interrupted system call`.
+  But will still remove the probes. Why?
 
 - To get correct comm names (process names) you can do `sudo sh` and run the commands. 
   Otherwise, the desktop manager may take over the name.
 
-- Note that some functions will call `cap_capable` directly, instead of
-  going through the other functions. Add option to view this directly?
+- Note that some kernel functions will call `cap_capable` directly, instead of
+  going through the other functions. Or they use some other less-common path.
 
 
 
