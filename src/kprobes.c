@@ -10,9 +10,9 @@
 
 #define BUFLEN 100
 
-static struct probes *init_probe_entry(char *name, char *function, int cap_argnum)
+static struct probe *init_probe_entry(char *name, char *function, int cap_argnum)
 {
-	struct probes *p = calloc(1, sizeof(struct probes));
+	struct probe *p = calloc(1, sizeof(struct probe));
 	if (!p)
 		return NULL;
 
@@ -22,9 +22,9 @@ static struct probes *init_probe_entry(char *name, char *function, int cap_argnu
 	return p;
 }
 
-int init_probelists(struct capmon *cm)
+int init_capmon(struct capmon *cm)
 {
-	struct probes *p;
+	struct probe *p;
 
 	LIST_INIT(&cm->available_probes);
 	LIST_INIT(&cm->selected_probes);
@@ -47,9 +47,9 @@ int init_probelists(struct capmon *cm)
 	return 0;
 }
 
-void destroy_probelists(struct capmon *cm)
+void destroy_capmon(struct capmon *cm)
 {
-	struct probes *p;
+	struct probe *p;
 
 	while (cm->selected_probes.lh_first != NULL) {
 		p = cm->selected_probes.lh_first;
@@ -66,7 +66,7 @@ void destroy_probelists(struct capmon *cm)
 
 int select_probe(struct capmon *cm, char *name)
 {
-	struct probes *p, *p_copy;
+	struct probe *p, *p_copy;
 
 	for (p = cm->available_probes.lh_first; p != NULL; p = p->entries.le_next) {
 		dbg("Selecting... %s?\n", p->name);
@@ -83,7 +83,7 @@ int select_probe(struct capmon *cm, char *name)
 	return ENOENT;
 }
 
-bool kprobe_exists(struct probes *p)
+bool kprobe_exists(struct probe *p)
 {
 	char buffer[BUFLEN];
 	bool res = false;
@@ -125,7 +125,7 @@ static int send_command(char *filename, char *cmd, bool append)
 	return 0;
 }
 
-static int kprobe_set_ena(struct probes *p, bool ena)
+static int kprobe_set_ena(struct probe *p, bool ena)
 {
 	char path[BUFLEN];
 	snprintf(path, BUFLEN, "%s/events/kprobes/%s/enable",
@@ -140,7 +140,7 @@ static int kprobe_set_ena(struct probes *p, bool ena)
 
 int kprobes_create(struct capmon *cm)
 {
-	struct probes *p;
+	struct probe *p;
 	char cmd[BUFLEN];
 	int err;
 
@@ -162,7 +162,7 @@ int kprobes_create(struct capmon *cm)
 
 int kprobes_enable(struct capmon *cm)
 {
-	struct probes *p;
+	struct probe *p;
 	int err;
 
 	for (p = cm->selected_probes.lh_first; p != NULL; p = p->entries.le_next) {
@@ -179,7 +179,7 @@ int kprobes_enable(struct capmon *cm)
 
 void kprobes_disable(struct capmon *cm)
 {
-	struct probes *p;
+	struct probe *p;
 	int err;
 
 	for (p = cm->selected_probes.lh_first; p != NULL; p = p->entries.le_next) {
@@ -193,7 +193,7 @@ void kprobes_disable(struct capmon *cm)
 
 void kprobes_destroy(struct capmon *cm)
 {
-	struct probes *p;
+	struct probe *p;
 	char cmd[BUFLEN];
 	int err;
 

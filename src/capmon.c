@@ -7,8 +7,10 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/queue.h>
+#include <getopt.h>
 
-#include <unistd.h>
+
+/*#include <unistd.h>*/
 
 #include "debug.h"
 #include "kprobes.h"
@@ -26,15 +28,6 @@ struct log_entry {
 	int pid;
 	int cap;
 };
-
-/*struct log_filters {*/
-	/*regex_t regex;*/
-	/*int pid;*/
-	/*bool (*cap_filter)(int);*/
-/*};*/
-
-
-
 
 int parse_entry(char *line, int len, struct log_entry *entry)
 {
@@ -165,11 +158,38 @@ out_destroy:
 
 int main(int argc, char **argv)
 {
+	int ena_background = 0;
+	int dis_background = 0;
+	bool cap_all = false;
 	int err;
+	char ch;
 
 	struct capmon capmon;
 
-	init_probelists(&capmon);
+	init_capmon(&capmon);
+
+	struct option long_options[] =
+	{
+	    {"enable", no_argument, &ena_background, 1},
+	    {"disable", no_argument, &dis_background, 1},
+	};
+
+	while ((ch = getopt_long(argc, argv, "ap:c:s:", long_options, NULL)) != -1)
+	{
+	    // check to see if a single character or long option came through
+	    switch (ch)
+	    {
+		 // short option 't'
+		 case 'a':
+			cap_all = true;
+		     break;
+		 // short option 'a'
+		 case 'p':
+		     /*field.artist = optarg; // or copy it if you want to*/
+		     break;
+	    }
+	}
+
 
 	/* TODO: handle errors from probe functions? */
 	if (argc == 1) {
@@ -214,5 +234,6 @@ int main(int argc, char **argv)
 		system("echo 0 > /sys/kernel/debug/tracing/trace");
 	} 
 
+	destroy_capmon(&capmon);
 	return 0;
 }
