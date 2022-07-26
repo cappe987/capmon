@@ -7,7 +7,7 @@
 #include "kprobes.h"
 #include "debug.h"
 
-#define BUFLEN 100
+#define BUFLEN 150
 
 
 bool kprobe_exists(struct probe *p)
