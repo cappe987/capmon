@@ -131,6 +131,6 @@ void kprobes_destroy(struct capmon *cm)
 		snprintf(cmd, BUFLEN, "-:%s\n", p->name);
 		err = send_command(KPROBE_EVENTS, cmd, true);
 		if (err)
-			fprintf(stderr, "Unable to destroy kprobe \"%s\"/n", p->name);
+			fprintf(stderr, "Unable to destroy kprobe \"%s\"\n", p->name);
 	}
 }
