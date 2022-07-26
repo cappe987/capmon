@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0+
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
-#ifndef _LIBCAP_LIBCAPMON_H
-#define _LIBCAP_LIBCAPMON_H
+#ifndef _CAPMON_LIBCAPMON_H
+#define _CAPMON_LIBCAPMON_H
 
+#include <stdlib.h>
+#include <linux/types.h>
+#include <linux/capability.h>
 #include <sys/queue.h>
+
+#include "bits.h"
 
 #define ERR(str, ...) fprintf(stderr, "Error: "str, ##__VA_ARGS__)
 #define UNUSED(x) (void)(x)
@@ -42,10 +47,28 @@ struct filter {
 	};
 };
 
+struct log_entry {
+	char comm[COMM_NAME_LEN];
+	time_t time;
+	int pid;
+	int cap;
+};
+
+/* TODO: Replace with hash table later? */
+struct process_stats {
+	LIST_ENTRY(process_stats) entries;
+	union {
+		char comm[COMM_NAME_LEN];
+		int pid;
+	};
+	DECLARE_BITMAP(capabilities, CAP_LAST_CAP+1);
+};
+
 struct capmon {
 	LIST_HEAD(available_probes, probe) available_probes;
 	LIST_HEAD(selected_probes, probe) selected_probes;
 	LIST_HEAD(filters, filter) filters;
+	LIST_HEAD(stats, process_stats) process_stats;
 	enum summary_mode summary;
 	//struct available_probes *headp2;
 	//struct selected_probes *headp1;
@@ -53,8 +76,10 @@ struct capmon {
 
 int probe_select(struct capmon *cm, char *name);
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg);
+void stats_add_cap(struct capmon *cm, struct log_entry *entry);
+void stats_print_summary(struct capmon *cm);
 void capmon_print(struct capmon *cm);
 int capmon_init(struct capmon *cm);
 void capmon_destroy(struct capmon *cm);
 
-#endif /* _LIBCAP_LIBCAPMON_H */
+#endif /* _CAPMON_LIBCAPMON_H */

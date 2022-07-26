@@ -18,13 +18,6 @@
 
 static volatile bool keep_running;
 
-struct log_entry {
-	char comm[COMM_NAME_LEN];
-	time_t time;
-	int pid;
-	int cap;
-};
-
 int parse_entry(char *line, int len, struct log_entry *entry)
 {
 	char *ptr;
@@ -139,8 +132,10 @@ int probe_monitor(struct capmon *cm)
 			if (ch == '\n') {
 				linebuffer[pos] = '\0';
 				err = parse_entry(linebuffer, pos, &entry);
-				if (!err && filter_match_entry(cm, &entry))
+				if (!err && filter_match_entry(cm, &entry)) {
 					print_log_entry(&entry);
+					stats_add_cap(cm, &entry);
+				}
 				pos = 0;
 				counter++;
 			}
@@ -160,6 +155,10 @@ int probe_monitor(struct capmon *cm)
 	}
 	fclose(logfile);
 	printf("\n");
+
+	if (cm->summary) {
+		stats_print_summary(cm);
+	}
 	return errno;
 }
 
@@ -242,7 +241,7 @@ int main(int argc, char **argv)
 			}
 			if (strcmp(optarg, "pid") == 0) {
 				capmon.summary = SUMMARY_PID;
-			} else if (strcmp(optarg, "comm") == 0) {
+			} else if (strcmp(optarg, "name") == 0) {
 				capmon.summary = SUMMARY_COMM;
 			} else {
 				ERR("invalid summary mode\n");
@@ -250,6 +249,8 @@ int main(int argc, char **argv)
 				goto out;
 			}
 			break;;
+		case '?':
+			goto out;
 	    }
 	}
 
@@ -272,7 +273,7 @@ int main(int argc, char **argv)
 		probe_select(&capmon, "capmon_inode");
 	}
 
-	/*capmon_print(&capmon);*/
+	capmon_print(&capmon);
 
 	if (ena_background) { /* TODO: proper error handling for background enable */
 		kprobes_create(&capmon);

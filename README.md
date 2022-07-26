@@ -10,10 +10,10 @@ Start monitoring capability checks.
 capmon
 ```
 
-Filter by process name. Use `-n` to specify one, or as last argument. Supports regex.
+Filter by process name. No flag reguired. Use `-n` if you need to specify more than one. Supports regex.
 ```
-capmon -n tcpdump -n trafgen
 capmon tcpdump
+capmon -n tcpdump -n trafgen
 ```
 
 Filter by process ID
@@ -30,7 +30,7 @@ Summary mode. On exit, output a summary of which capabilities each process has
 accessed. Either grouped by process name or by pid.
 ```
 capmon -s pid
-capmon -s comm
+capmon -s name
 ```
 
 Listen to ALL capability checks. By default it only listens to the functions
@@ -63,7 +63,6 @@ capmon itself uses `CAP_DAC_READ_SEARCH` and `CAP_DAC_AUDIT_WRITE`?
 Alternatively, `CAP_DAC_OVERRIDE`.
 
 # To-do list
-- Add CMake build system
 - Check for possible out of range indexing in the code
 - Summary mode - based on pid or comm
 - Return value of cap check?

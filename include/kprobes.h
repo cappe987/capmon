@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
-#ifndef _LIBCAP_KPROBES_H
-#define _LIBCAP_KPROBES_H
+#ifndef _CAPMON_KPROBES_H
+#define _CAPMON_KPROBES_H
 
 #include <stdbool.h>
 
@@ -18,4 +18,4 @@ int kprobes_enable(struct capmon *cm);
 void kprobes_disable(struct capmon *cm);
 void kprobes_destroy(struct capmon *cm);
 
-#endif /* _LIBCAP_KPROBES_H */
+#endif /* _CAPMON_KPROBES_H */

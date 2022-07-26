@@ -112,6 +112,58 @@ out_err:
 	return EINVAL;
 }
 
+void stats_add_cap(struct capmon *cm, struct log_entry *entry)
+{
+	struct process_stats *ps;
+
+	if (cm->summary == SUMMARY_NONE)
+		return;
+
+	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
+		if (cm->summary == SUMMARY_COMM && strcmp(entry->comm, ps->comm) == 0) {
+			set_bit(entry->cap, ps->capabilities);
+			return;
+		} else if (cm->summary == SUMMARY_PID && entry->pid == ps->pid) {
+			set_bit(entry->cap, ps->capabilities);
+			return;
+		}
+	}
+
+
+	/* New process comm/pid */
+
+	/* TODO: propagate error */
+	ps = calloc(1, sizeof(struct process_stats));
+	if (!ps) {
+		return;
+	}
+
+	if (cm->summary == SUMMARY_PID)
+		ps->pid = entry->pid;
+	else if (cm->summary == SUMMARY_COMM)
+		strncpy(ps->comm, entry->comm, COMM_NAME_LEN);
+
+	set_bit(entry->cap, ps->capabilities);
+	LIST_INSERT_HEAD(&cm->process_stats, ps, entries);
+}
+
+void stats_print_summary(struct capmon *cm)
+{
+	struct process_stats *ps;
+	int cap;
+
+	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
+		if (cm->summary == SUMMARY_PID)
+			printf("Pid: %d\n", ps->pid);
+		else if (cm->summary == SUMMARY_COMM)
+			printf("Process: %s\n", ps->comm);
+
+		for (cap = 0; cap <= CAP_LAST_CAP; cap++)
+			if (test_bit(cap, ps->capabilities))
+				printf("%s\n", cap_to_str(cap));
+	}
+}
+
 void capmon_print(struct capmon *cm)
 {
 	printf("--- CAPMON ---\n");
@@ -129,6 +181,7 @@ int capmon_init(struct capmon *cm)
 	LIST_INIT(&cm->available_probes);
 	LIST_INIT(&cm->selected_probes);
 	LIST_INIT(&cm->filters);
+	LIST_INIT(&cm->process_stats);
 
 	/* Add available probes */
 	p = init_probe_entry("capmon_all", "cap_capable", 3);
@@ -155,6 +208,7 @@ void capmon_destroy(struct capmon *cm)
 {
 	struct probe *p;
 	struct filter *f;
+	struct process_stats *ps;
 
 	while (cm->selected_probes.lh_first != NULL) {
 		p = cm->selected_probes.lh_first;
@@ -172,5 +226,11 @@ void capmon_destroy(struct capmon *cm)
 		f = cm->filters.lh_first;
 		LIST_REMOVE(cm->filters.lh_first, entries);
 		free(f);
+	}
+
+	while (cm->process_stats.lh_first != NULL) {
+		ps = cm->process_stats.lh_first;
+		LIST_REMOVE(cm->process_stats.lh_first, entries);
+		free(ps);
 	}
 }
