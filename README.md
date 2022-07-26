@@ -2,7 +2,14 @@
 
 Monitor when processes check capabilities to find out what they require.
 
-
+# Installation
+```
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+sudo make install
+```
 
 # Usage
 Start monitoring capability checks.
