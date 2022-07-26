@@ -2,7 +2,7 @@
 
 .cache/
 compile_commands.json
-capdump
+capmon
 
 
 # Prerequisites
