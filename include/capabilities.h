@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0+
+// SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
 #ifndef _LIBCAP_CAPABILITIES_H
 #define _LIBCAP_CAPABILITIES_H
