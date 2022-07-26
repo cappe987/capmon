@@ -31,6 +31,8 @@ int parse_entry(char *line, int len, struct log_entry *entry)
  * Sample line from /sys/log/debug/tracing/trace:
 systemd-journal-525     [002] ...1. 16449.937047: capmon_ns: (ns_capable+0x0/0x50) cap=0x13 comm="systemd-journal"
 */
+	if (len <= 37) /* Avoid out of bounds access */
+		return EINVAL;
 
 	ptr = line + 17;
 	entry->pid = atoi(ptr);
@@ -161,6 +163,7 @@ int probe_monitor(struct capmon *cm)
 
 void sig_handler(int signo)
 {
+	UNUSED(signo);
 	keep_running = false;
 }
 

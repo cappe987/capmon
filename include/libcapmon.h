@@ -5,6 +5,7 @@
 #include <sys/queue.h>
 
 #define ERR(str, ...) fprintf(stderr, "Error: "str, ##__VA_ARGS__)
+#define UNUSED(x) (void)(x)
 #define NAME_LEN 50
 #define COMM_NAME_LEN 16
 #define CAP_NAME_LEN 22
