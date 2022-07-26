@@ -13,8 +13,6 @@
 #include "libcapmon.h"
 
 #define BUFSIZE 1000
-#define COMM_NAME_LEN 16
-#define CAP_NAME_LEN 22
 
 static volatile bool keep_running;
 
@@ -56,12 +54,45 @@ int parse_entry(char *line, int len, struct log_entry *entry)
 	return 0;
 }
 
+bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
+{
+	struct filter *f;
+	bool pid_filter = false;
+	bool pid_match = false;
+	bool cap_filter = false;
+	bool cap_match = false;
+	bool comm_filter = false;
+	bool comm_match = false;
+
+	for (f = cm->filters.lh_first; f != NULL; f = f->entries.le_next) {
+		switch(f->type) {
+			case FILTER_PID:
+				pid_filter = true;
+				if (entry->pid == f->pid)
+					pid_match = true;
+				break;
+			case FILTER_CAP:
+				cap_filter = true;
+				if (entry->cap == f->cap)
+					cap_match = true;
+				break;
+			case FILTER_COMM:
+				comm_filter = true;
+				if (strncmp(entry->comm, f->comm, COMM_NAME_LEN) == 0)
+					comm_match = true;
+				break;
+		}
+	}
+	/* if there is no filter of that type, return true for it. Else use match result */
+	return (!pid_filter || pid_match) && (!cap_filter || cap_match) && (!comm_filter || comm_match);
+}
+
 void print_log_entry(struct log_entry *entry)
 {
 	printf("Process=%-16s Cap=%-22s\n", entry->comm, cap_to_str(entry->cap));
 }
 
-int probe_monitor()
+int probe_monitor(struct capmon *cm)
 {
 	char linebuffer[BUFSIZE];
 	struct log_entry entry;
@@ -88,7 +119,7 @@ int probe_monitor()
 			if (ch == '\n') {
 				linebuffer[pos] = '\0';
 				err = parse_entry(linebuffer, pos, &entry);
-				if (!err)
+				if (!err && filter_match_entry(cm, &entry))
 					print_log_entry(&entry);
 				pos = 0;
 				counter++;
@@ -133,7 +164,7 @@ int run_monitor_mode(struct capmon *cm)
 	signal(SIGINT, sig_handler);
 
 	printf("--- capmon monitor mode ---\n");
-	probe_monitor();
+	probe_monitor(cm);
 
 out_disable:
 	kprobes_disable(cm);

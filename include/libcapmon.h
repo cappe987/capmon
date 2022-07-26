@@ -6,6 +6,8 @@
 
 #define ERR(str, ...) fprintf(stderr, "Error: "str, ##__VA_ARGS__)
 #define NAME_LEN 50
+#define COMM_NAME_LEN 16
+#define CAP_NAME_LEN 22
 
 struct probe {
 	LIST_ENTRY(probe) entries;
@@ -33,7 +35,7 @@ struct filter {
 	union {
 		int pid;
 		int cap;
-		char comm[NAME_LEN];
+		char comm[COMM_NAME_LEN];
 	};
 };
 

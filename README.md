@@ -64,7 +64,7 @@ Alternatively, `CAP_DAC_OVERRIDE`.
 
 # To-do list
 - Add CMake build system
-- Filter by comm name, cap, pid
+- Parse pid and time
 - Check for possible out of range indexing in the code
 - Summary mode - based on pid or comm
 - Return value of cap check?

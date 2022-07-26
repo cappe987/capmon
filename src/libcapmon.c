@@ -99,7 +99,7 @@ int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 			}
 			break;
 		case FILTER_COMM:
-			strncpy(filter->comm, optarg, NAME_LEN);
+			strncpy(filter->comm, optarg, COMM_NAME_LEN);
 			break;
 	}
 
