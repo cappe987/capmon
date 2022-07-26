@@ -75,7 +75,6 @@ int probe_select(struct capmon *cm, char *name)
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 {
 	struct filter *filter;
-	int pid;
 	filter = calloc(1, sizeof(struct filter));
 	if (!filter) {
 		ERR("failed to allocate memory\n");

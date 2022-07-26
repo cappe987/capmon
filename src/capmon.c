@@ -18,37 +18,45 @@ static volatile bool keep_running;
 
 struct log_entry {
 	char comm[COMM_NAME_LEN];
-	long long time;
+	time_t time;
 	int pid;
 	int cap;
 };
 
 int parse_entry(char *line, int len, struct log_entry *entry)
 {
-	char *cap;
-	char *comm;
-	char *opts;
-	int comm_len, err;
+	char *ptr;
+	int comm_len;
+/*
+ * Sample line from /sys/log/debug/tracing/trace:
+systemd-journal-525     [002] ...1. 16449.937047: capmon_ns: (ns_capable+0x0/0x50) cap=0x13 comm="systemd-journal"
+*/
 
-	cap = strstr(line, "cap=");
-	if (!cap) {
+	ptr = line + 17;
+	entry->pid = atoi(ptr);
+
+	ptr = line + 37;
+	entry->time = atol(ptr);
+
+	ptr = strstr(line, "cap=");
+	if (!ptr) {
 		return EINVAL;
 	}
 
-	cap += 6;
-	entry->cap = strtol(cap, NULL, 16);
+	ptr += 6;
+	entry->cap = strtol(ptr, NULL, 16);
 
-	comm = strstr(line, "comm=");
-	if (!comm) {
-		return 3;
+	ptr = strstr(line, "comm=");
+	if (!ptr) {
+		return EINVAL;
 	}
 
-	comm += 6;
+	ptr += 6;
 	for (comm_len = 0;
-	     comm[comm_len] != '"' && comm_len < COMM_NAME_LEN;
+	     ptr[comm_len] != '"' && comm_len < COMM_NAME_LEN;
 	     comm_len++) { }
 
-	strncpy(entry->comm, comm, comm_len);
+	strncpy(entry->comm, ptr, comm_len);
 	entry->comm[comm_len] = '\0';
 
 	return 0;
@@ -89,7 +97,11 @@ bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
 
 void print_log_entry(struct log_entry *entry)
 {
-	printf("Process=%-16s Cap=%-22s\n", entry->comm, cap_to_str(entry->cap));
+	printf("%-8ld  %-16s  %-7d  %-22s\n",
+	       entry->time,
+	       entry->comm,
+	       entry->pid,
+	       cap_to_str(entry->cap));
 }
 
 int probe_monitor(struct capmon *cm)
@@ -109,6 +121,10 @@ int probe_monitor(struct capmon *cm)
 	logfile = fopen(KPROBES_LOG, "r");
 	if (!logfile)
 		return errno;
+
+	printf("-----------------------------------------------\n");
+	printf("Time    | Process         | Pid    | Capability\n");
+	printf("-----------------------------------------------\n");
 
 	while(true) {
 		while ((ch = getc(logfile)) != EOF && keep_running)  {
@@ -163,7 +179,6 @@ int run_monitor_mode(struct capmon *cm)
 	keep_running = true;
 	signal(SIGINT, sig_handler);
 
-	printf("--- capmon monitor mode ---\n");
 	probe_monitor(cm);
 
 out_disable:
@@ -252,7 +267,7 @@ int main(int argc, char **argv)
 		probe_select(&capmon, "capmon_inode");
 	}
 
-	capmon_print(&capmon);
+	/*capmon_print(&capmon);*/
 
 	if (ena_background) { /* TODO: proper error handling for background enable */
 		kprobes_create(&capmon);
