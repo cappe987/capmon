@@ -228,11 +228,6 @@ int main(int argc, char **argv)
 			if (err)
 				goto out;
 			break;
-		case 'n':
-			err = filter_create(&capmon, FILTER_COMM, optarg);
-			if (err)
-				goto out;
-			break;
 		case 's':
 			if (capmon.summary != SUMMARY_NONE) {
 				ERR("sumary mode already set\n");
@@ -254,7 +249,7 @@ int main(int argc, char **argv)
 	    }
 	}
 
-	if (optind == argc - 1) { /* Final unmatched argument is comm filter */
+	for (; optind <= argc - 1; optind++) { /* Final unmatched argument is comm filter */
 		err = filter_create(&capmon, FILTER_COMM, argv[optind]);
 		if (err)
 			goto out;
@@ -273,7 +268,7 @@ int main(int argc, char **argv)
 		probe_select(&capmon, "capmon_inode");
 	}
 
-	capmon_print(&capmon);
+	/*capmon_print(&capmon);*/
 
 	if (ena_background) { /* TODO: proper error handling for background enable */
 		kprobes_create(&capmon);

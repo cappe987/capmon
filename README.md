@@ -10,10 +10,9 @@ Start monitoring capability checks.
 capmon
 ```
 
-Filter by process name. No flag reguired. Use `-n` if you need to specify more than one. Supports regex.
+Filter by process name. Supports regex.
 ```
-capmon tcpdump
-capmon -n tcpdump -n trafgen
+capmon tcpdump trafgen
 ```
 
 Filter by process ID
@@ -51,6 +50,20 @@ is interpreted as
 (name:tcpdump OR name:trafgen) AND (capability:CAP_NET_RAW)
 ```
 
+## Example: combining arguments
+The example below listens to only `tcpdump` and `trafgen` commands, will listen
+to ALL capability checks, will do a summary at the end based on the names
+(which will only be tcpdump and trafgen), and will only listen if the
+capability being checked is also `CAP_NET_RAW` or `CAP_NET_ADMIN`. So it has to
+belong to either of the names AND be one of those two capabilities.
+```
+capmon tcpdump trafgen -a -s name -c CAP_NET_RAW -c CAP_NET_ADMIN
+```
+This particular combination may not be very useful, but it shows how you can
+combine the arguments.
+
+## Running in background
+
 Start or stop monitoring in the background. Cannot be combined with any other
 arguments. After enabling it you can view and filter the output by running
 `capmon` as shown above.
@@ -64,7 +77,8 @@ Alternatively, `CAP_DAC_OVERRIDE`.
 
 # To-do list
 - Check for possible out of range indexing in the code
-- Summary mode - based on pid or comm
+- Improve on summary output format
+- Add regex support
 - Return value of cap check?
 - Create first release
 
