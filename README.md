@@ -13,9 +13,9 @@ with SIGKILL will leave the kprobes and they must be removed with `capmon
 capmon
 ```
 
-Filter by process name (in this case, the name "tcpdump"). Optional, but should
-always be the last argument. Supports regex.
+Filter by process name. Use `-n` to specify one, or as last argument. Supports regex.
 ```
+capmon -n tcpdump -n trafgen
 capmon tcpdump
 ```
 
@@ -43,7 +43,8 @@ Listen to ALL capability checks. By default it only listens to the functions
 capmon -a
 ```
 
-All the above arguments can be combined freely.
+All the above arguments can be combined freely. Multiple filters can be used. Filters of the same type are treated as `OR` operations. Filters of different types are treated as `AND` operations. For example, `(name:tcpdump OR name:trafgen) AND (capability:CAP_NET_RAW)`
+
 
 Start or stop monitoring in the background. Cannot be combined with any other
 arguments. After enabling it you can view and filter the output by running

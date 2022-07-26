@@ -1,5 +1,8 @@
 
+#include <string.h>
 #include <linux/capability.h>
+#include <errno.h>
+
 
 #include "capabilities.h"
 
@@ -51,3 +54,49 @@ const char *cap_to_str(int cap)
 	}
 }
 
+int str_to_cap(char *cap)
+{
+	if (strcmp(cap, "CAP_CHOWN"             ) == 0) return CAP_CHOWN;
+	if (strcmp(cap, "CAP_DAC_OVERRIDE"      ) == 0) return CAP_DAC_OVERRIDE;
+	if (strcmp(cap, "CAP_DAC_READ_SEARCH"   ) == 0) return CAP_DAC_READ_SEARCH;
+	if (strcmp(cap, "CAP_FOWNER"            ) == 0) return CAP_FOWNER;
+	if (strcmp(cap, "CAP_FSETID"            ) == 0) return CAP_FSETID;
+	if (strcmp(cap, "CAP_KILL"              ) == 0) return CAP_KILL;
+	if (strcmp(cap, "CAP_SETGID"            ) == 0) return CAP_SETGID;
+	if (strcmp(cap, "CAP_SETUID"            ) == 0) return CAP_SETUID;
+	if (strcmp(cap, "CAP_SETPCAP"           ) == 0) return CAP_SETPCAP;
+	if (strcmp(cap, "CAP_LINUX_IMMUTABLE"   ) == 0) return CAP_LINUX_IMMUTABLE;
+	if (strcmp(cap, "CAP_NET_BIND_SERVICE"  ) == 0) return CAP_NET_BIND_SERVICE;
+	if (strcmp(cap, "CAP_NET_BROADCAST"     ) == 0) return CAP_NET_BROADCAST;
+	if (strcmp(cap, "CAP_NET_ADMIN"         ) == 0) return CAP_NET_ADMIN;
+	if (strcmp(cap, "CAP_NET_RAW"           ) == 0) return CAP_NET_RAW;
+	if (strcmp(cap, "CAP_IPC_LOCK"          ) == 0) return CAP_IPC_LOCK;
+	if (strcmp(cap, "CAP_IPC_OWNER"         ) == 0) return CAP_IPC_OWNER;
+	if (strcmp(cap, "CAP_SYS_MODULE"        ) == 0) return CAP_SYS_MODULE;
+	if (strcmp(cap, "CAP_SYS_RAWIO"         ) == 0) return CAP_SYS_RAWIO;
+	if (strcmp(cap, "CAP_SYS_CHROOT"        ) == 0) return CAP_SYS_CHROOT;
+	if (strcmp(cap, "CAP_SYS_PTRACE"        ) == 0) return CAP_SYS_PTRACE;
+	if (strcmp(cap, "CAP_SYS_PACCT"         ) == 0) return CAP_SYS_PACCT;
+	if (strcmp(cap, "CAP_SYS_ADMIN"         ) == 0) return CAP_SYS_ADMIN;
+	if (strcmp(cap, "CAP_SYS_BOOT"          ) == 0) return CAP_SYS_BOOT;
+	if (strcmp(cap, "CAP_SYS_NICE"          ) == 0) return CAP_SYS_NICE;
+	if (strcmp(cap, "CAP_SYS_RESOURCE"      ) == 0) return CAP_SYS_RESOURCE;
+	if (strcmp(cap, "CAP_SYS_TIME"          ) == 0) return CAP_SYS_TIME;
+	if (strcmp(cap, "CAP_SYS_TTY_CONFIG"    ) == 0) return CAP_SYS_TTY_CONFIG;
+	if (strcmp(cap, "CAP_MKNOD"             ) == 0) return CAP_MKNOD;
+	if (strcmp(cap, "CAP_LEASE"             ) == 0) return CAP_LEASE;
+	if (strcmp(cap, "CAP_AUDIT_WRITE"       ) == 0) return CAP_AUDIT_WRITE;
+	if (strcmp(cap, "CAP_AUDIT_CONTROL"     ) == 0) return CAP_AUDIT_CONTROL;
+	if (strcmp(cap, "CAP_SETFCAP"           ) == 0) return CAP_SETFCAP;
+	if (strcmp(cap, "CAP_MAC_OVERRIDE"      ) == 0) return CAP_MAC_OVERRIDE;
+	if (strcmp(cap, "CAP_MAC_ADMIN"         ) == 0) return CAP_MAC_ADMIN;
+	if (strcmp(cap, "CAP_SYSLOG"            ) == 0) return CAP_SYSLOG;
+	if (strcmp(cap, "CAP_WAKE_ALARM"        ) == 0) return CAP_WAKE_ALARM;
+	if (strcmp(cap, "CAP_BLOCK_SUSPEND"     ) == 0) return CAP_BLOCK_SUSPEND;
+	if (strcmp(cap, "CAP_AUDIT_READ"        ) == 0) return CAP_AUDIT_READ;
+	if (strcmp(cap, "CAP_PERFMON"           ) == 0) return CAP_PERFMON;
+	if (strcmp(cap, "CAP_BPF"               ) == 0)	return CAP_BPF;
+	if (strcmp(cap, "CAP_CHECKPOINT_RESTORE") == 0) return CAP_CHECKPOINT_RESTORE;
+
+	return -EINVAL;
+}

@@ -17,7 +17,7 @@ SDIR=src
 #LIBS=
 
 
-_OBJ = capmon.o capabilities.o kprobes.o
+_OBJ = capmon.o libcapmon.o capabilities.o kprobes.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 obj:

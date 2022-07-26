@@ -1,20 +1,16 @@
 
 #include <stdio.h>
-/*#include <stdint.h>*/
-/*#include <stdbool.h>*/
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/queue.h>
 #include <getopt.h>
 
-
-/*#include <unistd.h>*/
 
 #include "debug.h"
 #include "kprobes.h"
 #include "capabilities.h"
+#include "libcapmon.h"
 
 #define BUFSIZE 1000
 #define COMM_NAME_LEN 16
@@ -65,7 +61,7 @@ void print_log_entry(struct log_entry *entry)
 	printf("Process=%-16s Cap=%-22s\n", entry->comm, cap_to_str(entry->cap));
 }
 
-int probe_log()
+int probe_monitor()
 {
 	char linebuffer[BUFSIZE];
 	struct log_entry entry;
@@ -125,14 +121,6 @@ int run_monitor_mode(struct capmon *cm)
 {
 	int err;
 
-	err = select_probe(cm, "capmon_ns");
-	if (err)
-		return err;
-
-	err = select_probe(cm, "capmon_inode");
-	if (err)
-		return err;
-
 	err = kprobes_create(cm);
 	if (err)
 		goto out_destroy;
@@ -145,8 +133,7 @@ int run_monitor_mode(struct capmon *cm)
 	signal(SIGINT, sig_handler);
 
 	printf("--- capmon monitor mode ---\n");
-	probe_log();
-
+	probe_monitor();
 
 out_disable:
 	kprobes_disable(cm);
@@ -161,79 +148,94 @@ int main(int argc, char **argv)
 	int ena_background = 0;
 	int dis_background = 0;
 	bool cap_all = false;
-	int err;
+	int err = 0;
 	char ch;
 
 	struct capmon capmon;
 
-	init_capmon(&capmon);
+	capmon_init(&capmon);
 
 	struct option long_options[] =
 	{
-	    {"enable", no_argument, &ena_background, 1},
-	    {"disable", no_argument, &dis_background, 1},
+		{"enable", no_argument, &ena_background, 1},
+		{"disable", no_argument, &dis_background, 1},
+		{NULL, 0, NULL, 0}
 	};
 
-	while ((ch = getopt_long(argc, argv, "ap:c:s:", long_options, NULL)) != -1)
-	{
-	    // check to see if a single character or long option came through
-	    switch (ch)
-	    {
-		 // short option 't'
-		 case 'a':
+	while ((ch = getopt_long(argc, argv, "ap:c:n:s:", long_options, NULL)) != -1) {
+
+		switch (ch) {
+		case 'a':
 			cap_all = true;
-		     break;
-		 // short option 'a'
-		 case 'p':
-		     /*field.artist = optarg; // or copy it if you want to*/
-		     break;
+			break;
+		case 'p':
+			err = filter_create(&capmon, FILTER_PID, optarg);
+			if (err)
+				goto out;
+			break;
+		case 'c':
+			err = filter_create(&capmon, FILTER_CAP, optarg);
+			if (err)
+				goto out;
+			break;
+		case 'n':
+			err = filter_create(&capmon, FILTER_COMM, optarg);
+			if (err)
+				goto out;
+			break;
+		case 's':
+			if (capmon.summary != SUMMARY_NONE) {
+				ERR("sumary mode already set\n");
+				err = EINVAL;
+				goto out;
+			}
+			if (strcmp(optarg, "pid") == 0) {
+				capmon.summary = SUMMARY_PID;
+			} else if (strcmp(optarg, "comm") == 0) {
+				capmon.summary = SUMMARY_COMM;
+			} else {
+				ERR("invalid summary mode\n");
+				err = EINVAL;
+				goto out;
+			}
+			break;;
 	    }
 	}
 
+	if (optind == argc - 1) { /* Final unmatched argument is comm filter */
+		err = filter_create(&capmon, FILTER_COMM, argv[optind]);
+		if (err)
+			goto out;
+	}
 
-	/* TODO: handle errors from probe functions? */
-	if (argc == 1) {
+	if (ena_background && dis_background) {
+		ERR("cannot enable and disable at the same time\n");
+		err = EINVAL;
+		goto out;
+	}
+
+	if (cap_all) {
+		probe_select(&capmon, "capmon_all");
+	} else {
+		probe_select(&capmon, "capmon_ns");
+		probe_select(&capmon, "capmon_inode");
+	}
+
+	capmon_print(&capmon);
+
+	if (ena_background) { /* TODO: proper error handling for background enable */
+		kprobes_create(&capmon);
+		kprobes_enable(&capmon);
+	} else if (dis_background) {
+		kprobes_disable(&capmon);
+		kprobes_destroy(&capmon);
+	} else {
 		run_monitor_mode(&capmon);
+	}
 
-	} else if (strcmp(argv[1], "ena") == 0) {
-		/*dbg("Enable %s\n", PROBE_NS);*/
+	goto out;
 
-		/*probe_create(probes[0]);*/
-		/*probe_create(probes[1]);*/
-		/*if (err)*/
-			/*// TODO: Error if probe already exists?*/
-			/*return err;*/
-		/*dbg("Created\n");*/
-
-		/*err = probe_enable();*/
-		/*if (err) {*/
-			/*probe_destroy();*/
-			/*return err;*/
-		/*}*/
-		/*dbg("Enabled\n");*/
-
-	/*} else if (strcmp(argv[1], "dis") == 0) {*/
-		/*dbg("Disable\n");*/
-		/*err = probe_disable();*/
-		/*if (err)*/
-			/*printf("Error: %s\n", strerror(err));*/
-
-		/*dbg("Disabled\n");*/
-		/*err = probe_destroy();*/
-		/*if (err) {*/
-			/*printf("Error: %s\n", strerror(err));*/
-			/*return err;*/
-		/*}*/
-		/*dbg("Deleted\n");*/
-		/*return 0;*/
-
-	} else if (strcmp(argv[1], "log") == 0) {
-		probe_log();
-
-	} else if (strcmp(argv[1], "clear") == 0) {
-		system("echo 0 > /sys/kernel/debug/tracing/trace");
-	} 
-
-	destroy_capmon(&capmon);
-	return 0;
+out:
+	capmon_destroy(&capmon);
+	return err;
 }
