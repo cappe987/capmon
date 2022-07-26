@@ -19,3 +19,9 @@ target_include_directories(capmon PRIVATE
   ${PROJECT_SOURCE_DIR}/include
 )
 
+install(TARGETS capmon
+        CONFIGURATIONS Debug
+        RUNTIME DESTINATION bin)
+install(TARGETS capmon
+        CONFIGURATIONS Release
+        RUNTIME DESTINATION bin)
