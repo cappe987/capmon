@@ -1,14 +1,11 @@
 # capmon - Linux Capabilities monitor
 
-Monitor when processes check capabilities to find out what they need.
+Monitor when processes check capabilities to find out what they require.
 
 
 
 # Usage
-
-Create kprobes and start monitor. Removes kprobes on graceful exit. Killing it
-with SIGKILL will leave the kprobes and they must be removed with `capmon
---disable`.
+Start monitoring capability checks.
 ```
 capmon
 ```
@@ -43,8 +40,16 @@ Listen to ALL capability checks. By default it only listens to the functions
 capmon -a
 ```
 
-All the above arguments can be combined freely. Multiple filters can be used. Filters of the same type are treated as `OR` operations. Filters of different types are treated as `AND` operations. For example, `(name:tcpdump OR name:trafgen) AND (capability:CAP_NET_RAW)`
-
+All the above arguments can be combined freely. Multiple filters can be used.
+Filters of the same type are treated as `OR` operations. Filters of different
+types are treated as `AND` operations. For example, the command
+```
+capmon -n tcpdump -n trafgen -c CAP_NET_RAW
+```
+is interpreted as
+```
+(name:tcpdump OR name:trafgen) AND (capability:CAP_NET_RAW)
+```
 
 Start or stop monitoring in the background. Cannot be combined with any other
 arguments. After enabling it you can view and filter the output by running
@@ -58,14 +63,14 @@ capmon itself uses `CAP_DAC_READ_SEARCH` and `CAP_DAC_AUDIT_WRITE`?
 Alternatively, `CAP_DAC_OVERRIDE`.
 
 # To-do list
-- Proper argument handling
 - Filter by comm name, cap, pid
 - Check for possible out of range indexing in the code
-- Stop handler to disable when process exits
 - Summary mode - based on pid or comm
-- Return value?
+- Return value of cap check?
 
 # Issues
+- Killing it with SIGKILL will leave the kprobes active. Can be removed with
+  `capmon --disable`.
 - If starting with sudo, it will not properly exit if sudo timeout is reached
   (i.e. when you need to enter your password again). `Interrupted system call`
 
@@ -77,7 +82,7 @@ Alternatively, `CAP_DAC_OVERRIDE`.
 
 
 
-# Commands
+# Notes on ktraceprobes
 
 
 ## Create kprobe
