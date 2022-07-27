@@ -89,7 +89,6 @@ capmon --disable
 
 # To-do list
 - Check for possible out of range indexing in the code
-- Add --version
 - Add -h/--help 
 - Improve on summary output format
 - Add regex support

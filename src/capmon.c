@@ -13,6 +13,7 @@
 #include "kprobes.h"
 #include "capabilities.h"
 #include "libcapmon.h"
+#include "version.h"
 
 #define BUFSIZE 1000
 
@@ -197,6 +198,7 @@ int main(int argc, char **argv)
 {
 	int ena_background = 0;
 	int dis_background = 0;
+	int version = 0;
 	bool cap_all = false;
 	int err = 0;
 	char ch;
@@ -209,6 +211,7 @@ int main(int argc, char **argv)
 	{
 		{"enable", no_argument, &ena_background, 1},
 		{"disable", no_argument, &dis_background, 1},
+		{"version", no_argument, &version, 1},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -247,6 +250,11 @@ int main(int argc, char **argv)
 		case '?':
 			goto out;
 	    }
+	}
+
+	if (version) {
+		PRINT_VERSION();
+		goto out;
 	}
 
 	for (; optind <= argc - 1; optind++) { /* Final unmatched argument is comm filter */

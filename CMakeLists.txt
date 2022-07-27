@@ -14,11 +14,14 @@ set(SRC_FILES
 	)
 list(TRANSFORM SRC_FILES PREPEND "${PROJECT_SOURCE_DIR}/src/")
 
+configure_file(include/version.h.in include/version.h)
+
 add_executable(capmon ${SRC_FILES})
 
-target_include_directories(capmon PRIVATE
-  ${PROJECT_SOURCE_DIR}/include
-)
+target_include_directories(capmon PUBLIC
+	${PROJECT_SOURCE_DIR}/include
+	${PROJECT_BINARY_DIR}/include
+	)
 
 install(TARGETS capmon
         CONFIGURATIONS Debug
