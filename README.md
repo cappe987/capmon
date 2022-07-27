@@ -89,7 +89,8 @@ capmon --disable
 
 # To-do list
 - Check for possible out of range indexing in the code
-- Add --version for version check
+- Add --version
+- Add -h/--help 
 - Improve on summary output format
 - Add regex support
 - Filter out capmons own checks on startup?
