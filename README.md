@@ -66,9 +66,9 @@ is interpreted as
 ```
 
 ## Example: combining arguments
-The example below listens to only `tcpdump` and `trafgen` commands, will listen
+The example below displays only `tcpdump` and `trafgen` commands, will listen
 to ALL capability checks, will do a summary at the end based on the names
-(which will only be tcpdump and trafgen), and will only listen if the
+(which will only be tcpdump and trafgen), and will only display if the
 capability being checked is also `CAP_NET_RAW` or `CAP_NET_ADMIN`. So it has to
 belong to either of the names AND be one of those two capabilities.
 ```
@@ -89,6 +89,7 @@ capmon --disable
 
 # To-do list
 - Check for possible out of range indexing in the code
+- Add --version for version check
 - Improve on summary output format
 - Add regex support
 - Filter out capmons own checks on startup?
