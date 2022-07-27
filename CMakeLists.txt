@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
+
 cmake_minimum_required(VERSION 3.12)
 
 project(capmon VERSION 1.0)
