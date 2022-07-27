@@ -1,6 +1,14 @@
 # capmon - Linux Capabilities monitor
 
-Monitor when processes check capabilities to find out what they require.
+Monitor when processes check
+[capabilities(7)](https://man7.org/linux/man-pages/man7/capabilities.7.html) to
+find out what they require.
+
+> Note: I do not know much about how capabilities works or how it's used in the
+> kernel. Capmon usually shows more than required. I do not yet know why the
+> kernel does all the extra checks.
+
+capmon itself requires `CAP_DAC_OVERRIDE`.
 
 # Installation
 ```
@@ -17,7 +25,7 @@ Start monitoring capability checks.
 capmon
 ```
 
-Filter by process name. Supports regex.
+Filter by process name. (todo: support regex)
 ```
 capmon tcpdump trafgen
 ```
@@ -71,21 +79,19 @@ combine the arguments.
 
 ## Running in background
 
-Start or stop monitoring in the background. Cannot be combined with any other
-arguments. After enabling it you can view and filter the output by running
-`capmon` as shown above.
+Start or stop monitoring in the background. Can only be combined with `-a`.
+After enabling it you can view and filter the output by running `capmon` as
+shown above.
 ```
 capmon --enable
 capmon --disable
 ```
 
-capmon itself uses `CAP_DAC_READ_SEARCH` and `CAP_DAC_AUDIT_WRITE`?
-Alternatively, `CAP_DAC_OVERRIDE`.
-
 # To-do list
 - Check for possible out of range indexing in the code
 - Improve on summary output format
 - Add regex support
+- Filter out capmons own checks on startup?
 - Return value of cap check?
 - Create first release
 
@@ -95,10 +101,8 @@ Alternatively, `CAP_DAC_OVERRIDE`.
 - If starting with sudo, it will not properly exit if sudo timeout is reached
   (i.e. when you need to enter your password again). `Interrupted system call`.
   But will still remove the probes. Why?
-
 - To get correct comm names (process names) you can do `sudo sh` and run the commands. 
   Otherwise, the desktop manager may take over the name.
-
 - Note that some kernel functions will call `cap_capable` directly, instead of
   going through the other functions. Or they use some other less-common path.
 
