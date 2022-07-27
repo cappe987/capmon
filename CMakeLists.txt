@@ -4,6 +4,7 @@ project(capmon VERSION 1.0)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wpedantic -Wextra")
 
+set(PROJECT_NAME_VERSION "${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}")
 
 set(SRC_FILES
 	capmon.c
@@ -25,3 +26,23 @@ install(TARGETS capmon
 install(TARGETS capmon
         CONFIGURATIONS Release
         RUNTIME DESTINATION bin)
+
+add_custom_target(tar
+	COMMAND 
+	mkdir "-p" "${PROJECT_NAME_VERSION}"
+	COMMAND
+	cp 
+	"-r"
+	"../CMakeLists.txt"
+	"../LICENSE"
+	"../README.md"
+	"../.gitignore"
+	"../include"
+	"../src"
+	"${PROJECT_NAME_VERSION}"
+	COMMAND 
+	tar 
+	"-cvzf" 
+	"${PROJECT_NAME_VERSION}.tar.gz"
+	"${PROJECT_NAME_VERSION}/"
+	)
