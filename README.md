@@ -94,12 +94,10 @@ capmon --disable
 
 # To-do list
 - Check for possible out of range indexing in the code
-- Add -h/--help 
 - Improve on summary output format
 - Add regex support
 - Filter out capmons own checks on startup?
 - Return value of cap check?
-- Create first release
 
 # Issues
 - Killing it with SIGKILL will leave the kprobes active. Can be removed with
