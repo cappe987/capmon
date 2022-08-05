@@ -70,6 +70,7 @@ struct capmon {
 	LIST_HEAD(filters, filter) filters;
 	LIST_HEAD(stats, process_stats) process_stats;
 	enum summary_mode summary;
+	bool in_background;
 	//struct available_probes *headp2;
 	//struct selected_probes *headp1;
 };

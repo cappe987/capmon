@@ -31,6 +31,32 @@ bool kprobe_exists(struct probe *p)
 	return res;
 }
 
+bool kprobes_select_enabled(struct capmon *cm)
+{
+	char buffer[BUFLEN];
+	bool res = false;
+	struct probe *p;
+	FILE *f;
+
+	f = fopen(KPROBES_DIR"/kprobe_profile", "r");
+
+	while (fgets(buffer, BUFLEN, f)) {
+		for (p = cm->available_probes.lh_first; p != NULL; p = p->entries.le_next) {
+			if (strstr(buffer, p->name)) {
+				res = true;
+				probe_select(cm, p->name);
+				break;
+			}
+		}
+	}
+
+	if (res)
+		cm->in_background = true;
+
+	fclose(f);
+	return res;
+}
+
 static int send_command(char *filename, char *cmd, bool append)
 {
 	FILE *f;
@@ -73,6 +99,9 @@ int kprobes_create(struct capmon *cm)
 	char cmd[BUFLEN];
 	int err;
 
+	if (cm->in_background)
+		return 0;
+
 	for (p = cm->selected_probes.lh_first; p != NULL; p = p->entries.le_next) {
 		DBG("Creating %s\n", p->name);
 		/* Creating multiple probes requires appending to the file */
@@ -93,6 +122,9 @@ int kprobes_enable(struct capmon *cm)
 {
 	struct probe *p;
 	int err;
+
+	if (cm->in_background)
+		return 0;
 
 	for (p = cm->selected_probes.lh_first; p != NULL; p = p->entries.le_next) {
 		DBG("Enabling %s\n", p->name);

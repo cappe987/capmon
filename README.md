@@ -63,7 +63,7 @@ All the above arguments can be combined freely. Multiple filters can be used.
 Filters of the same type are treated as `OR` operations. Filters of different
 types are treated as `AND` operations. For example, the command
 ```
-capmon -n tcpdump -n trafgen -c CAP_NET_RAW
+capmon tcpdump trafgen -c CAP_NET_RAW
 ```
 is interpreted as
 ```

@@ -200,6 +200,7 @@ int capmon_init(struct capmon *cm)
 	LIST_INSERT_HEAD(&cm->available_probes, p, entries);
 
 	cm->summary = SUMMARY_NONE;
+	cm->in_background = false;
 
 	return 0;
 }

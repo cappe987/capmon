@@ -186,12 +186,56 @@ int run_monitor_mode(struct capmon *cm)
 
 	probe_monitor(cm);
 
+	if (cm->in_background)
+		goto out;
+
 out_disable:
 	kprobes_disable(cm);
 
 out_destroy:
 	kprobes_destroy(cm);
+
+out:
 	return err;
+}
+
+void print_help()
+{
+	PRINT_VERSION();
+
+	printf("\nUSAGE:\n");
+	printf("\t capmon [OPTIONS] [PATTERNS]\n");
+
+	printf("\nPATTERNS:\n");
+	printf("\tFilter output by process name.\n");
+
+	printf("\nOPTIONS:\n");
+	printf("\t-p, --pid <PID>\n");
+	printf("\t    Filter output by process ID.\n");
+	printf("\n");
+	printf("\t-c, --capability <CAP>\n");
+	printf("\t    Filter output by Capability. E.g., CAP_NET_RAW\n");
+	printf("\n");
+	printf("\t-s, --summary <pid|name>\n");
+	printf("\
+\t    Enable summary mode. Summary mode keeps track of all the capabilities\n\
+\t    either <pid> or <name> uses and prints a summary at the end when you stop\n\
+\t    capmon.\n");
+	printf("\n");
+	printf("\t-a, --all\n");
+	printf("\
+\t    Listen to ALL capability checks. By default it only listens to the functions\n\
+\t    `ns_capable` and `capable_wrt_inode_uidgid`. This listens directly to the\n\
+\t    `cap_capable` function.\n");
+	printf("\n");
+	printf("\t--enable\n");
+	printf("\
+\t    Enable monitoring in background. Start program without --enable or --disable\n\
+\t    to monitor.\n");
+	printf("\n");
+	printf("\t--disable\n");
+	printf("\
+\t    Disable monitoring in background.\n");
 }
 
 int main(int argc, char **argv)
@@ -209,13 +253,18 @@ int main(int argc, char **argv)
 
 	struct option long_options[] =
 	{
-		{"enable", no_argument, &ena_background, 1},
-		{"disable", no_argument, &dis_background, 1},
-		{"version", no_argument, &version, 1},
-		{NULL, 0, NULL, 0}
+		{"enable",      no_argument, &ena_background, 1   },
+		{"disable",     no_argument, &dis_background, 1   },
+		{"version",     no_argument, &version,        1   },
+		{ "help",       no_argument, NULL,            'h' },
+		{ "all",        no_argument, NULL,            'a' },
+		{ "pid",        no_argument, NULL,            'p' },
+		{ "capability", no_argument, NULL,            'c' },
+		{ "summary",    no_argument, NULL,            's' },
+		{NULL,          0,           NULL,            0   }
 	};
 
-	while ((ch = getopt_long(argc, argv, "ap:c:n:s:", long_options, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "ap:c:n:s:h", long_options, NULL)) != -1) {
 
 		switch (ch) {
 		case 'a':
@@ -247,6 +296,9 @@ int main(int argc, char **argv)
 				goto out;
 			}
 			break;;
+		case 'h':
+			print_help();
+			goto out;
 		case '?':
 			goto out;
 	    }
@@ -269,11 +321,16 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	if (cap_all) {
-		probe_select(&capmon, "capmon_all");
+	if (kprobes_select_enabled(&capmon)) {
+		printf("Attaching to active kprobe monitor\n");
 	} else {
-		probe_select(&capmon, "capmon_ns");
-		probe_select(&capmon, "capmon_inode");
+		if (cap_all) {
+			probe_select(&capmon, "capmon_all");
+		} else {
+			probe_select(&capmon, "capmon_ns");
+			probe_select(&capmon, "capmon_inode");
+		}
+
 	}
 
 	/*capmon_print(&capmon);*/
