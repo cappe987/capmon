@@ -54,3 +54,9 @@ add_custom_target(tar
 	"${PROJECT_NAME_VERSION}.tar.gz"
 	"${PROJECT_NAME_VERSION}/"
 	)
+
+set_property(
+        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        APPEND
+        PROPERTY ADDITIONAL_CLEAN_FILES "${PROJECT_NAME_VERSION}.tar.gz"
+)
