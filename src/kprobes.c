@@ -47,7 +47,7 @@ static int send_command(char *filename, char *cmd, bool append)
 		 * redirect append `>>`?
 		 */
 		f = fopen(filename, "a+");
-	else 
+	else
 		f = fopen(filename, "w");
 
 	DBG("SENDING COMMAND: %s to %s\n", cmd, filename);
@@ -63,6 +63,7 @@ static int send_command(char *filename, char *cmd, bool append)
 static int kprobe_set_ena(struct probe *p, bool ena)
 {
 	char path[BUFLEN];
+
 	snprintf(path, BUFLEN, "%s/events/kprobes/%s/enable",
 		 KPROBES_DIR,
 		 p->name);

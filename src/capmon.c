@@ -17,7 +17,7 @@
 
 #define BUFSIZE 1000
 
-static volatile bool keep_running;
+static bool keep_running;
 
 int parse_entry(char *line, int len, struct log_entry *entry)
 {
@@ -28,7 +28,7 @@ int parse_entry(char *line, int len, struct log_entry *entry)
 systemd-journal-525     [002] ...1. 16449.937047: capmon_ns: (ns_capable+0x0/0x50) cap=0x13 comm="systemd-journal"
 */
 	if (len <= 37) /* Avoid out of bounds access */
-		return EINVAL;
+		return -EINVAL;
 
 	ptr = line + 17;
 	entry->pid = atoi(ptr);
@@ -37,22 +37,21 @@ systemd-journal-525     [002] ...1. 16449.937047: capmon_ns: (ns_capable+0x0/0x5
 	entry->time = atol(ptr);
 
 	ptr = strstr(line, "cap=");
-	if (!ptr) {
-		return EINVAL;
-	}
+	if (!ptr)
+		return -EINVAL;
 
 	ptr += 6;
 	entry->cap = strtol(ptr, NULL, 16);
 
 	ptr = strstr(line, "comm=");
-	if (!ptr) {
-		return EINVAL;
-	}
+	if (!ptr)
+		return -EINVAL;
 
 	ptr += 6;
 	for (comm_len = 0;
 	     ptr[comm_len] != '"' && comm_len < COMM_NAME_LEN;
-	     comm_len++) { }
+	     comm_len++) {
+	}
 
 	strncpy(entry->comm, ptr, comm_len);
 	entry->comm[comm_len] = '\0';
@@ -71,22 +70,22 @@ bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
 	bool comm_match = false;
 
 	for (f = cm->filters.lh_first; f != NULL; f = f->entries.le_next) {
-		switch(f->type) {
-			case FILTER_PID:
-				pid_filter = true;
-				if (entry->pid == f->pid)
-					pid_match = true;
-				break;
-			case FILTER_CAP:
-				cap_filter = true;
-				if (entry->cap == f->cap)
-					cap_match = true;
-				break;
-			case FILTER_COMM:
-				comm_filter = true;
-				if (strncmp(entry->comm, f->comm, COMM_NAME_LEN) == 0)
-					comm_match = true;
-				break;
+		switch (f->type) {
+		case FILTER_PID:
+			pid_filter = true;
+			if (entry->pid == f->pid)
+				pid_match = true;
+			break;
+		case FILTER_CAP:
+			cap_filter = true;
+			if (entry->cap == f->cap)
+				cap_match = true;
+			break;
+		case FILTER_COMM:
+			comm_filter = true;
+			if (strncmp(entry->comm, f->comm, COMM_NAME_LEN) == 0)
+				comm_match = true;
+			break;
 		}
 	}
 	/* if there is no filter of that type, return true for it. Else use match result */
@@ -124,11 +123,11 @@ int probe_monitor(struct capmon *cm)
 	printf("Time    | Process         | Pid    | Capability\n");
 	printf("-----------------------------------------------\n");
 
-	while(true) {
-		while ((ch = getc(logfile)) != EOF && keep_running)  {
+	while (true) {
+		while ((ch = getc(logfile)) != EOF && keep_running) {
 
 			// TODO: Handle idx out of range in buffer?
-			linebuffer[pos] = ch;	
+			linebuffer[pos] = ch;
 			pos++;
 			if (ch == '\n') {
 				linebuffer[pos] = '\0';
@@ -145,9 +144,9 @@ int probe_monitor(struct capmon *cm)
 		if (!keep_running)
 			break;
 
-		if (ferror(logfile)) {
+		if (ferror(logfile))
 			break;
-		}
+
 		clearerr(logfile);
 		(void)fflush(stdout);
 
@@ -157,9 +156,8 @@ int probe_monitor(struct capmon *cm)
 	fclose(logfile);
 	printf("\n");
 
-	if (cm->summary) {
+	if (cm->summary)
 		stats_print_summary(cm);
-	}
 	return errno;
 }
 
@@ -199,7 +197,7 @@ out:
 	return err;
 }
 
-void print_help()
+void print_help(void)
 {
 	PRINT_VERSION();
 
@@ -251,8 +249,7 @@ int main(int argc, char **argv)
 
 	capmon_init(&capmon);
 
-	struct option long_options[] =
-	{
+	struct option long_options[] = {
 		{"enable",      no_argument, &ena_background, 1   },
 		{"disable",     no_argument, &dis_background, 1   },
 		{"version",     no_argument, &version,        1   },
@@ -295,13 +292,13 @@ int main(int argc, char **argv)
 				err = EINVAL;
 				goto out;
 			}
-			break;;
+			break;
 		case 'h':
 			print_help();
 			goto out;
 		case '?':
 			goto out;
-	    }
+		}
 	}
 
 	if (version) {

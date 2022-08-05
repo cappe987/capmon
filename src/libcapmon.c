@@ -13,6 +13,7 @@
 static void print_probes(struct capmon *cm)
 {
 	struct probe *p;
+
 	printf("\n--- Available probes ---\n");
 	for (p = cm->available_probes.lh_first; p != NULL; p = p->entries.le_next)
 		printf("Probe: %s\n", p->name);
@@ -28,16 +29,16 @@ static void print_filters(struct capmon *cm)
 
 	printf("\n--- Filters ---\n");
 	for (f = cm->filters.lh_first; f != NULL; f = f->entries.le_next) {
-		switch(f->type) {
-			case FILTER_PID:
-				printf("Filter pid %d\n", f->pid);
-				break;
-			case FILTER_CAP:
-				printf("Filter cap %s\n", cap_to_str(f->cap));
-				break;
-			case FILTER_COMM:
-				printf("Filter comm %s\n", f->comm);
-				break;
+		switch (f->type) {
+		case FILTER_PID:
+			printf("Filter pid %d\n", f->pid);
+			break;
+		case FILTER_CAP:
+			printf("Filter cap %s\n", cap_to_str(f->cap));
+			break;
+		case FILTER_COMM:
+			printf("Filter comm %s\n", f->comm);
+			break;
 		}
 	}
 }
@@ -45,6 +46,7 @@ static void print_filters(struct capmon *cm)
 static struct probe *init_probe_entry(char *name, char *function, int cap_argnum)
 {
 	struct probe *p = calloc(1, sizeof(struct probe));
+
 	if (!p)
 		return NULL;
 
@@ -63,44 +65,45 @@ int probe_select(struct capmon *cm, char *name)
 		if (strncmp(name, p->name, NAME_LEN) == 0) {
 			p_copy = init_probe_entry(p->name, p->function, p->cap_argnum);
 			if (!p_copy)
-				return ENOMEM;
+				return -ENOMEM;
 			LIST_INSERT_HEAD(&cm->selected_probes, p_copy, entries);
 			DBG("Found %s\n", p->name);
 			return 0;
 		}
 	}
 	fprintf(stderr, "Unable to find capmon probe \"%s\"\n", name);
-	return ENOENT;
+	return -ENOENT;
 }
 
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 {
 	struct filter *filter;
+
 	filter = calloc(1, sizeof(struct filter));
 	if (!filter) {
 		ERR("failed to allocate memory\n");
-		return ENOMEM;
+		return -ENOMEM;
 	}
 	filter->type = type;
-	
-	switch(type) {
-		case FILTER_PID:
-			filter->pid = atoi(optarg);
-			if (filter->pid <= 0) {
-				ERR("filter pid - \"%s\" invalid argument\n", optarg);
-				goto out_err;
-			}
-			break;
-		case FILTER_CAP:
-			filter->cap = str_to_cap(optarg);
-			if (filter->cap < 0) {
-				ERR("filter cap - \"%s\" not a capability\n", optarg);
-				goto out_err;
-			}
-			break;
-		case FILTER_COMM:
-			strncpy(filter->comm, optarg, COMM_NAME_LEN);
-			break;
+
+	switch (type) {
+	case FILTER_PID:
+		filter->pid = atoi(optarg);
+		if (filter->pid <= 0) {
+			ERR("filter pid - \"%s\" invalid argument\n", optarg);
+			goto out_err;
+		}
+		break;
+	case FILTER_CAP:
+		filter->cap = str_to_cap(optarg);
+		if (filter->cap < 0) {
+			ERR("filter cap - \"%s\" not a capability\n", optarg);
+			goto out_err;
+		}
+		break;
+	case FILTER_COMM:
+		strncpy(filter->comm, optarg, COMM_NAME_LEN);
+		break;
 	}
 
 	LIST_INSERT_HEAD(&cm->filters, filter, entries);
@@ -108,7 +111,7 @@ int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 
 out_err:
 	free(filter);
-	return EINVAL;
+	return -EINVAL;
 }
 
 void stats_add_cap(struct capmon *cm, struct log_entry *entry)
@@ -132,9 +135,8 @@ void stats_add_cap(struct capmon *cm, struct log_entry *entry)
 
 	/* TODO: propagate error */
 	ps = calloc(1, sizeof(struct process_stats));
-	if (!ps) {
+	if (!ps)
 		return;
-	}
 
 	if (cm->summary == SUMMARY_PID)
 		ps->pid = entry->pid;
@@ -186,17 +188,17 @@ int capmon_init(struct capmon *cm)
 	/* Add available probes */
 	p = init_probe_entry("capmon_all", "cap_capable", 3);
 	if (!p)
-		return ENOMEM;
+		return -ENOMEM;
 	LIST_INSERT_HEAD(&cm->available_probes, p, entries);
 
 	p = init_probe_entry("capmon_inode", "capable_wrt_inode_uidgid", 3);
 	if (!p)
-		return ENOMEM;
+		return -ENOMEM;
 	LIST_INSERT_HEAD(&cm->available_probes, p, entries);
 
 	p = init_probe_entry("capmon_ns", "ns_capable", 2);
 	if (!p)
-		return ENOMEM;
+		return -ENOMEM;
 	LIST_INSERT_HEAD(&cm->available_probes, p, entries);
 
 	cm->summary = SUMMARY_NONE;
