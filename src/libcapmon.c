@@ -20,7 +20,6 @@ static void print_probes(struct capmon *cm)
 	printf("\n--- Selected probes ---\n");
 	for (p = cm->selected_probes.lh_first; p != NULL; p = p->entries.le_next)
 		printf("Probe: %s\n", p->name);
-
 }
 
 static void print_filters(struct capmon *cm)
@@ -129,7 +128,6 @@ void stats_add_cap(struct capmon *cm, struct log_entry *entry)
 		}
 	}
 
-
 	/* New process comm/pid */
 
 	/* TODO: propagate error */
@@ -140,8 +138,8 @@ void stats_add_cap(struct capmon *cm, struct log_entry *entry)
 
 	if (cm->summary == SUMMARY_PID)
 		ps->pid = entry->pid;
-	else if (cm->summary == SUMMARY_COMM)
-		strncpy(ps->comm, entry->comm, COMM_NAME_LEN);
+
+	strncpy(ps->comm, entry->comm, COMM_NAME_LEN);
 
 	set_bit(entry->cap, ps->capabilities);
 	LIST_INSERT_HEAD(&cm->process_stats, ps, entries);
@@ -154,13 +152,15 @@ void stats_print_summary(struct capmon *cm)
 
 	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
 		if (cm->summary == SUMMARY_PID)
-			printf("Pid: %d\n", ps->pid);
+			printf("%d - %s\n", ps->pid, ps->comm);
 		else if (cm->summary == SUMMARY_COMM)
-			printf("Process: %s\n", ps->comm);
+			printf("%s\n", ps->comm);
 
 		for (cap = 0; cap <= CAP_LAST_CAP; cap++)
 			if (test_bit(cap, ps->capabilities))
-				printf("%s\n", cap_to_str(cap));
+				printf("\t%s\n", cap_to_str(cap));
+		if (ps->entries.le_next)
+			printf("\n");
 	}
 }
 

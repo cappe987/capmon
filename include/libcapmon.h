@@ -57,10 +57,8 @@ struct log_entry {
 /* TODO: Replace with hash table later? */
 struct process_stats {
 	LIST_ENTRY(process_stats) entries;
-	union {
-		char comm[COMM_NAME_LEN];
-		int pid;
-	};
+	char comm[COMM_NAME_LEN];
+	int pid;
 	DECLARE_BITMAP(capabilities, CAP_LAST_CAP+1);
 };
 

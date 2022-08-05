@@ -94,7 +94,6 @@ capmon --disable
 
 # To-do list
 - Check for possible out of range indexing in the code
-- Improve on summary output format
 - Add regex support
 - Filter out capmons own checks on startup?
 - Return value of cap check?
