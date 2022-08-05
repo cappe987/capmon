@@ -11,26 +11,6 @@
 
 #define BUFLEN 150
 
-
-bool kprobe_exists(struct probe *p)
-{
-	char buffer[BUFLEN];
-	bool res = false;
-	FILE *f;
-
-	f = fopen(KPROBES_DIR"/kprobe_profile", "r");
-
-	while (fgets(buffer, BUFLEN, f)) {
-		if (strstr(buffer, p->name)) {
-			res = true;
-			break;
-		}
-	}
-
-	fclose(f);
-	return res;
-}
-
 bool kprobes_select_enabled(struct capmon *cm)
 {
 	char buffer[BUFLEN];
