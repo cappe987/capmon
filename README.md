@@ -9,11 +9,19 @@ Monitor when processes check
 [capabilities(7)](https://man7.org/linux/man-pages/man7/capabilities.7.html) to
 find out what they require.
 
+If you want to run `ip netns add some_name` without sudo you would start `capmon`
+and try to run the command (without sudo). The first time you will notice that
+it shows `CAP_SYS_ADMIN` in `capmon` for the `ip` command. Resolve that
+by giving yourself and the program the capability and run the command again.
+This time you will notice that `capmon` first outputs `CAP_SYS_ADMIN` and
+then `CAP_DAC_OVERRIDE` for `ip`, and the command will fail. After also adding
+`CAP_DAC_OVERRIDE` you can now use `ip netns` commands without sudo.
+
 > Note: I do not know much about how capabilities works or how it's used in the
-> kernel. Capmon usually shows more than required. I do not yet know why the
+> kernel. Capmon might show more than required. I do not yet know why the
 > kernel does all the extra checks.
 
-capmon itself requires `CAP_DAC_OVERRIDE`.
+`capmon` itself requires `CAP_DAC_OVERRIDE` to run.
 
 # Installation
 ```
