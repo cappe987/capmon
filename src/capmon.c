@@ -202,50 +202,50 @@ out:
 	return err;
 }
 
-void print_help(void)
+void usage(void)
 {
-	PRINT_VERSION();
+	/*printf(USAGE);*/
+	/*return;*/
 
-	printf("\nUSAGE:\n");
-	printf("\t capmon [OPTIONS] [PATTERNS]\n");
-
-	printf("\nPATTERNS:\n");
-	printf("\tFilter output by process name.\n");
-
-	printf("\nOPTIONS:\n");
-	printf("\t-p, --pid <PID>\n");
-	printf("\t    Filter output by process ID.\n");
-	printf("\n");
-	printf("\t-c, --capability <CAP>\n");
-	printf("\t    Filter output by Capability. E.g., CAP_NET_RAW\n");
-	printf("\n");
-	printf("\t-s, --summary <pid|name>\n");
-	printf("\
-\t    Enable summary mode. Summary mode keeps track of all the capabilities\n\
-\t    either <pid> or <name> uses and prints a summary at the end when you stop\n\
-\t    capmon.\n");
-	printf("\n");
-	printf("\t-a, --all\n");
-	printf("\
-\t    Listen to ALL capability checks. By default it only listens to the functions\n\
-\t    `ns_capable` and `capable_wrt_inode_uidgid`. This listens directly to the\n\
-\t    `cap_capable` function.\n");
-	printf("\n");
-	printf("\t--enable\n");
-	printf("\
-\t    Enable monitoring in background. Start program without --enable or --disable\n\
-\t    to monitor.\n");
-	printf("\n");
-	printf("\t--disable\n");
-	printf("\
-\t    Disable monitoring in background.\n");
+	fputs("capmon - Linux Capabilities Monitor\n"
+	      "\n"
+	      "USAGE:\n"
+	      "        capmon [OPTIONS] [PATTERNS]\n"
+	      "\n"
+	      "PATTERNS:\n"
+	      "        Filter by process name. Supports POSIX-Extended Regular Expressions.\n"
+	      "        (tip: use quotation marks to avoid the shell interpreting as globbing)\n"
+	      "\n"
+	      "OPTIONS:\n"
+	      "        -p, --pid <PID>\n"
+	      "            Filter output by process ID.\n"
+	      "\n"
+	      "        -c, --capability <CAP>\n"
+	      "            Filter output by Capability. E.g., CAP_NET_RAW\n"
+	      "\n"
+	      "        -s, --summary <pid|name>\n"
+	      "            Enable summary mode. Summary mode keeps track of all the capabilities\n"
+	      "            either <pid> or <name> uses and prints a summary at the end when you stop\n"
+	      "            capmon.\n"
+	      "\n"
+	      "        -a, --all\n"
+	      "            Listen to ALL capability checks. By default it only listens to the functions\n"
+	      "            `ns_capable` and `capable_wrt_inode_uidgid`. This listens directly to the\n"
+	      "            `cap_capable` function.\n"
+	      "\n"
+	      "        --enable\n"
+	      "            Enable monitoring in background. Start program without --enable or --disable\n"
+	      "            to monitor.\n"
+	      "\n"
+	      "        --disable\n"
+	      "            Disable monitoring in background.\n"
+	      ,stderr);
 }
 
 int main(int argc, char **argv)
 {
 	int ena_background = 0;
 	int dis_background = 0;
-	int version = 0;
 	bool cap_all = false;
 	int err = 0;
 	char ch;
@@ -257,7 +257,7 @@ int main(int argc, char **argv)
 	struct option long_options[] = {
 		{"enable",      no_argument, &ena_background, 1   },
 		{"disable",     no_argument, &dis_background, 1   },
-		{"version",     no_argument, &version,        1   },
+		{"version",     no_argument, NULL,            'v' },
 		{ "help",       no_argument, NULL,            'h' },
 		{ "all",        no_argument, NULL,            'a' },
 		{ "pid",        no_argument, NULL,            'p' },
@@ -266,9 +266,12 @@ int main(int argc, char **argv)
 		{NULL,          0,           NULL,            0   }
 	};
 
-	while ((ch = getopt_long(argc, argv, "ap:c:n:s:h", long_options, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "vap:c:n:s:h", long_options, NULL)) != -1) {
 
 		switch (ch) {
+		case 'v':
+			VERSION();
+			goto out;
 		case 'a':
 			cap_all = true;
 			break;
@@ -299,16 +302,11 @@ int main(int argc, char **argv)
 			}
 			break;
 		case 'h':
-			print_help();
+			usage();
 			goto out;
 		case '?':
 			goto out;
 		}
-	}
-
-	if (version) {
-		PRINT_VERSION();
-		goto out;
 	}
 
 	for (; optind <= argc - 1; optind++) { /* Unmatched arguments are comm filters */

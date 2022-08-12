@@ -7,6 +7,6 @@
 #define capmon_VERSION_MAJOR @capmon_VERSION_MAJOR@
 #define capmon_VERSION_MINOR @capmon_VERSION_MINOR@
 
-#define PRINT_VERSION() printf("capmon-%d.%d\n", capmon_VERSION_MAJOR, capmon_VERSION_MINOR);
+#define VERSION() fprintf(stderr, "capmon-%d.%d\n", capmon_VERSION_MAJOR, capmon_VERSION_MINOR);
 
 #endif /* _CAPMON_VERSION_H */
