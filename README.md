@@ -144,17 +144,17 @@ echo > /sys/kernel/debug/tracing/kprobe_events
 
 
 
+# Temporary notes
 
-echo 'p:capmon_ns ns_capable cap=$arg2 comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events
-echo 'p:capmon_inode capable_wrt_inode_uidgid cap=$arg3 comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events
+https://events19.linuxfoundation.org/wp-content/uploads/2017/12/oss-eu-2018-fun-with-dynamic-trace-events_steven-rostedt.pdf
 
-echo 1 > /sys/kernel/debug/tracing/events/kprobes/capmon_inode/enable
+
+<!--echo 'p:capmon_ns ns_capable cap=$arg2 comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events-->
+<!--echo 'p:capmon_ns ns_capable cap=+2($stack) comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events-->
+echo 'p:capmon_ns cap_capable cap=+4($arg1):u32 comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events
 echo 1 > /sys/kernel/debug/tracing/events/kprobes/capmon_ns/enable
 
 cat /sys/kernel/debug/tracing/trace
 
 echo 0 > /sys/kernel/debug/tracing/events/kprobes/capmon_ns/enable
-echo 0 > /sys/kernel/debug/tracing/events/kprobes/capmon_inode/enable
-
 echo -:capmon_ns >> /sys/kernel/debug/tracing/kprobe_events
-echo -:capmon_inode >> /sys/kernel/debug/tracing/kprobe_events

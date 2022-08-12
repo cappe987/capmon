@@ -10,7 +10,7 @@
 
 #define KPROBES_DIR "/sys/kernel/debug/tracing"
 #define KPROBE_EVENTS KPROBES_DIR"/kprobe_events"
-#define KPROBES_LOG KPROBES_DIR"/trace"
+#define KPROBES_LOG KPROBES_DIR"/trace_pipe"
 
 bool kprobes_select_enabled(struct capmon *cm);
 bool kprobe_exists(struct probe *p);
