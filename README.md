@@ -9,13 +9,12 @@ Monitor when processes check
 [capabilities(7)](https://man7.org/linux/man-pages/man7/capabilities.7.html) to
 find out what they require.
 
-If you want to run `ip netns add some_name` without sudo you would start `capmon`
-and try to run the command (without sudo). The first time you will notice that
-it shows `CAP_SYS_ADMIN` in `capmon` for the `ip` command. Resolve that
-by giving yourself and the program the capability and run the command again.
-This time you will notice that `capmon` first outputs `CAP_SYS_ADMIN` and
-then `CAP_DAC_OVERRIDE` for `ip`, and the command will fail. After also adding
-`CAP_DAC_OVERRIDE` you can now use `ip netns` commands without sudo.
+If you want to run `ip netns add my_namespace` without sudo you would start
+`capmon`, possibly with "ip" as filter, and then run the command and see what
+capabilities `capmon` outputs. Note that the command may stop on the first
+failure, after adding the first capability you run it again and see if it still
+fails. If so, you should see a new capability be output by `capmon`. In the case
+of `ip netns add` it requires both `CAP_SYS_ADMIN` and `CAP_DAC_OVERRIDE`.
 
 > Note: I do not know much about how capabilities works or how it's used in the
 > kernel. Capmon might show more than required. I do not yet know why the
@@ -31,6 +30,8 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 sudo make install
 ```
+
+Depends on kernel config `CONFIG_KPROBE_EVENTS` to run.
 
 # Usage
 Start monitoring capability checks.
@@ -103,6 +104,8 @@ capmon --disable
 
 # To-do list
 - Check for possible out of range indexing in the code
+- Write tests (and possibly test framework)
+- Add `touch` to check if user is allowed to add kprobes before actually doing it
 - Filter out capmons own checks on startup?
 - Return value of cap check?
 
