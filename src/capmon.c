@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <getopt.h>
-
+#include <regex.h>
 
 #include "debug.h"
 #include "kprobes.h"
@@ -68,6 +68,9 @@ bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
 	bool cap_match = false;
 	bool comm_filter = false;
 	bool comm_match = false;
+	regmatch_t pmatch[1];
+	size_t nmatch = 1;
+	int res;
 
 	for (f = cm->filters.lh_first; f != NULL; f = f->entries.le_next) {
 		switch (f->type) {
@@ -83,8 +86,10 @@ bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
 			break;
 		case FILTER_COMM:
 			comm_filter = true;
-			if (strncmp(entry->comm, f->comm, COMM_NAME_LEN) == 0)
+			res = regexec(&f->comm, entry->comm, nmatch, pmatch, 0);
+			if (res == 0) {
 				comm_match = true;
+			}
 			break;
 		}
 	}
@@ -306,7 +311,7 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	for (; optind <= argc - 1; optind++) { /* Final unmatched argument is comm filter */
+	for (; optind <= argc - 1; optind++) { /* Unmatched arguments are comm filters */
 		err = filter_create(&capmon, FILTER_COMM, argv[optind]);
 		if (err)
 			goto out;
@@ -327,7 +332,6 @@ int main(int argc, char **argv)
 			probe_select(&capmon, "capmon_ns");
 			probe_select(&capmon, "capmon_inode");
 		}
-
 	}
 
 	/*capmon_print(&capmon);*/

@@ -37,7 +37,7 @@ static void print_filters(struct capmon *cm)
 			printf("Filter cap %s\n", cap_to_str(f->cap));
 			break;
 		case FILTER_COMM:
-			printf("Filter comm %s\n", f->comm);
+			printf("Filter comm \"%s\"\n", f->comm_pattern);
 			break;
 		}
 	}
@@ -78,6 +78,7 @@ int probe_select(struct capmon *cm, char *name)
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 {
 	struct filter *filter;
+	int err;
 
 	filter = calloc(1, sizeof(struct filter));
 	if (!filter) {
@@ -102,13 +103,20 @@ int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 		}
 		break;
 	case FILTER_COMM:
-		strncpy(filter->comm, optarg, COMM_NAME_LEN);
+		err = regcomp(&filter->comm, optarg, REG_EXTENDED);
+		if (err != 0) {
+			ERR("Invalid regex pattern, returning %d\n", err);
+			goto out_regex_err;
+		}
+		strncpy(filter->comm_pattern, optarg, REGEX_LEN);
 		break;
 	}
 
 	LIST_INSERT_HEAD(&cm->filters, filter, entries);
 	return 0;
 
+out_regex_err:
+	regfree(&filter->comm);
 out_err:
 	free(filter);
 	return -EINVAL;
