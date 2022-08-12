@@ -97,7 +97,7 @@ int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 		break;
 	case FILTER_CAP:
 		filter->cap = str_to_cap(optarg);
-		if (filter->cap < 0) {
+		if (filter->cap < 0 || filter->cap > CAP_LAST_CAP) {
 			ERR("filter cap - \"%s\" not a capability\n", optarg);
 			goto out_err;
 		}
