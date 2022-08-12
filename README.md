@@ -38,7 +38,8 @@ Start monitoring capability checks.
 capmon
 ```
 
-Filter by process name. (todo: support regex)
+Filter by process name. Supports POSIX-Extended Regular Expressions (tip: use
+quotation marks to avoid the shell interpreting as globbing).
 ```
 capmon tcpdump trafgen
 ```

@@ -235,6 +235,8 @@ void capmon_destroy(struct capmon *cm)
 
 	while (cm->filters.lh_first != NULL) {
 		f = cm->filters.lh_first;
+		if (f->type == FILTER_COMM)
+			regfree(&f->comm);
 		LIST_REMOVE(cm->filters.lh_first, entries);
 		free(f);
 	}
