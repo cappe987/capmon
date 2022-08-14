@@ -87,9 +87,8 @@ bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
 		case FILTER_COMM:
 			comm_filter = true;
 			res = regexec(&f->comm, entry->comm, nmatch, pmatch, 0);
-			if (res == 0) {
+			if (res == 0)
 				comm_match = true;
-			}
 			break;
 		}
 	}
@@ -174,15 +173,19 @@ void sig_handler(int signo)
 
 int run_monitor_mode(struct capmon *cm)
 {
-	int err;
+	int err = 0;
 
-	err = kprobes_create(cm);
-	if (err)
-		goto out_destroy;
+	if (!cm->in_background) {
+		err = kprobes_create(cm);
+		if (err)
+			goto out_destroy;
 
-	err = kprobes_enable(cm);
-	if (err)
-		goto out_disable;
+		err = kprobes_enable(cm);
+		if (err)
+			goto out_disable;
+	} else {
+		printf("Attaching to active kprobe monitor\n");
+	}
 
 	keep_running = true;
 	signal(SIGINT, sig_handler);
@@ -204,9 +207,6 @@ out:
 
 void usage(void)
 {
-	/*printf(USAGE);*/
-	/*return;*/
-
 	fputs("capmon - Linux Capabilities Monitor\n"
 	      "\n"
 	      "USAGE:\n"
@@ -238,25 +238,26 @@ void usage(void)
 	      "            to monitor.\n"
 	      "\n"
 	      "        --disable\n"
-	      "            Disable monitoring in background.\n"
-	      ,stderr);
+	      "            Disable monitoring in background.\n",
+	      stderr);
 }
 
-int main(int argc, char **argv)
+enum run_mode {
+	RUNMODE_NONE,
+	RUNMODE_MONITOR,
+	RUNMODE_ENA_BG,
+	RUNMODE_DIS_BG
+};
+
+int parse_args(struct capmon *cm, enum run_mode *mode, int argc, char **argv)
 {
-	int ena_background = 0;
-	int dis_background = 0;
+	int ena_bg, dis_bg, err = 0;
 	bool cap_all = false;
-	int err = 0;
 	char ch;
 
-	struct capmon capmon;
-
-	capmon_init(&capmon);
-
 	struct option long_options[] = {
-		{"enable",      no_argument, &ena_background, 1   },
-		{"disable",     no_argument, &dis_background, 1   },
+		{"enable",      no_argument, &ena_bg, 1   },
+		{"disable",     no_argument, &dis_bg, 1   },
 		{"version",     no_argument, NULL,            'v' },
 		{ "help",       no_argument, NULL,            'h' },
 		{ "all",        no_argument, NULL,            'a' },
@@ -266,85 +267,114 @@ int main(int argc, char **argv)
 		{NULL,          0,           NULL,            0   }
 	};
 
-	while ((ch = getopt_long(argc, argv, "vap:c:n:s:h", long_options, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "vhap:c:n:s:", long_options, NULL)) != -1) {
 
 		switch (ch) {
 		case 'v':
 			VERSION();
+			*mode = RUNMODE_NONE;
+			goto out;
+		case 'h':
+			usage();
+			*mode = RUNMODE_NONE;
 			goto out;
 		case 'a':
 			cap_all = true;
 			break;
 		case 'p':
-			err = filter_create(&capmon, FILTER_PID, optarg);
+			err = filter_create(cm, FILTER_PID, optarg);
 			if (err)
 				goto out;
 			break;
 		case 'c':
-			err = filter_create(&capmon, FILTER_CAP, optarg);
+			err = filter_create(cm, FILTER_CAP, optarg);
 			if (err)
 				goto out;
 			break;
 		case 's':
-			if (capmon.summary != SUMMARY_NONE) {
-				ERR("sumary mode already set\n");
+			if (cm->summary != SUMMARY_NONE) {
+				ERR("summary mode already set\n");
 				err = EINVAL;
 				goto out;
 			}
 			if (strcmp(optarg, "pid") == 0) {
-				capmon.summary = SUMMARY_PID;
+				cm->summary = SUMMARY_PID;
 			} else if (strcmp(optarg, "name") == 0) {
-				capmon.summary = SUMMARY_COMM;
+				cm->summary = SUMMARY_COMM;
 			} else {
 				ERR("invalid summary mode\n");
 				err = EINVAL;
 				goto out;
 			}
 			break;
-		case 'h':
-			usage();
-			goto out;
 		case '?':
 			goto out;
 		}
 	}
 
 	for (; optind <= argc - 1; optind++) { /* Unmatched arguments are comm filters */
-		err = filter_create(&capmon, FILTER_COMM, argv[optind]);
+		err = filter_create(cm, FILTER_COMM, argv[optind]);
 		if (err)
 			goto out;
 	}
 
-	if (ena_background && dis_background) {
+	if (ena_bg && dis_bg) {
 		ERR("cannot enable and disable at the same time\n");
 		err = EINVAL;
 		goto out;
+	} else if (ena_bg) {
+		*mode = RUNMODE_ENA_BG;
+	} else if (dis_bg) {
+		*mode = RUNMODE_DIS_BG;
+	} else {
+		*mode = RUNMODE_MONITOR;
 	}
 
-	if (kprobes_select_enabled(&capmon)) {
-		printf("Attaching to active kprobe monitor\n");
-	} else {
+	if (!kprobes_select_enabled(cm)) {
 		if (cap_all) {
-			probe_select(&capmon, "capmon_all");
+			probe_select(cm, "capmon_all");
 		} else {
-			probe_select(&capmon, "capmon_ns");
-			probe_select(&capmon, "capmon_inode");
+			probe_select(cm, "capmon_ns");
+			probe_select(cm, "capmon_inode");
 		}
 	}
 
+out:
+	return err;
+}
+
+int main(int argc, char **argv)
+{
+	struct capmon capmon;
+	enum run_mode mode;
+	int err = 0;
+
+	capmon_init(&capmon);
+
+	err = parse_args(&capmon, &mode, argc, argv);
+	if (err)
+		goto out;
+
 	/*capmon_print(&capmon);*/
 
-	if (ena_background) { /* TODO: proper error handling for background enable */
+	/* TODO: proper error handling for background enable? */
+	switch (mode) {
+	case RUNMODE_NONE:
+		goto out;
+	case RUNMODE_MONITOR:
+		err = run_monitor_mode(&capmon);
+		if (err)
+			goto out;
+		break;
+	case RUNMODE_ENA_BG:
 		kprobes_create(&capmon);
 		kprobes_enable(&capmon);
-	} else if (dis_background) {
+		break;
+	case RUNMODE_DIS_BG:
 		kprobes_disable(&capmon);
 		kprobes_destroy(&capmon);
-	} else {
-		run_monitor_mode(&capmon);
+		break;
 	}
-
-	goto out;
 
 out:
 	capmon_destroy(&capmon);
