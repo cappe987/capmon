@@ -16,6 +16,7 @@ set(SRC_FILES
 	capabilities.c
 	kprobes.c
 	libcapmon.c
+	monitor.c
 	)
 list(TRANSFORM SRC_FILES PREPEND "${PROJECT_SOURCE_DIR}/src/")
 
