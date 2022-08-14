@@ -170,13 +170,9 @@ int run_monitor_mode(struct capmon *cm)
 	int err = 0;
 
 	if (!cm->in_background) {
-		err = kprobes_create(cm);
+		err = kprobes_start(cm);
 		if (err)
-			goto out_destroy;
-
-		err = kprobes_enable(cm);
-		if (err)
-			goto out_disable;
+			return 0;
 	} else {
 		printf("Attaching to active kprobe monitor\n");
 	}
@@ -186,15 +182,8 @@ int run_monitor_mode(struct capmon *cm)
 
 	probe_monitor(cm);
 
-	if (cm->in_background)
-		goto out;
+	if (!cm->in_background)
+		kprobes_stop(cm);
 
-out_disable:
-	kprobes_disable(cm);
-
-out_destroy:
-	kprobes_destroy(cm);
-
-out:
-	return err;
+	return 0;
 }

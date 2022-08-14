@@ -77,7 +77,7 @@ static int kprobe_set_ena(struct probe *p, bool ena)
 		return send_command(path, "0", false);
 }
 
-int kprobes_create(struct capmon *cm)
+static int kprobes_create(struct capmon *cm)
 {
 	struct probe *p;
 	char cmd[BUFLEN];
@@ -102,7 +102,7 @@ int kprobes_create(struct capmon *cm)
 	return 0;
 }
 
-int kprobes_enable(struct capmon *cm)
+static int kprobes_enable(struct capmon *cm)
 {
 	struct probe *p;
 	int err;
@@ -122,7 +122,7 @@ int kprobes_enable(struct capmon *cm)
 	return 0;
 }
 
-void kprobes_disable(struct capmon *cm)
+static void kprobes_disable(struct capmon *cm)
 {
 	struct probe *p;
 	int err;
@@ -136,7 +136,7 @@ void kprobes_disable(struct capmon *cm)
 	}
 }
 
-void kprobes_destroy(struct capmon *cm)
+static void kprobes_destroy(struct capmon *cm)
 {
 	struct probe *p;
 	char cmd[BUFLEN];
@@ -149,6 +149,36 @@ void kprobes_destroy(struct capmon *cm)
 		if (err)
 			fprintf(stderr, "Unable to destroy kprobe \"%s\"\n", p->name);
 	}
+}
+
+int kprobes_start(struct capmon *cm)
+{
+	int err;
+
+	err = kprobes_create(cm);
+	if (err)
+		goto out_destroy;
+
+	err = kprobes_enable(cm);
+	if (err) {
+		goto out_disable;
+	}
+
+	goto out;
+
+out_disable:
+	kprobes_disable(cm);
+
+out_destroy:
+	kprobes_destroy(cm);
+out:
+	return err;
+}
+
+void kprobes_stop(struct capmon *cm)
+{
+	kprobes_disable(cm);
+	kprobes_destroy(cm);
 }
 
 /* Check if user is can to create kprobes */

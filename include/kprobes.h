@@ -14,10 +14,8 @@
 
 bool kprobes_select_enabled(struct capmon *cm);
 bool kprobe_exists(struct probe *p);
-int kprobes_create(struct capmon *cm);
-int kprobes_enable(struct capmon *cm);
-void kprobes_disable(struct capmon *cm);
-void kprobes_destroy(struct capmon *cm);
+int kprobes_start(struct capmon *cm);
+void kprobes_stop(struct capmon *cm);
 bool kprobes_can_read_write();
 
 #endif /* _CAPMON_KPROBES_H */

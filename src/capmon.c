@@ -179,12 +179,12 @@ int main(int argc, char **argv)
 			goto out;
 		break;
 	case RUNMODE_ENA_BG:
-		kprobes_create(&capmon);
-		kprobes_enable(&capmon);
+		err = kprobes_start(&capmon);
+		if (err)
+			goto out;
 		break;
 	case RUNMODE_DIS_BG:
-		kprobes_disable(&capmon);
-		kprobes_destroy(&capmon);
+		kprobes_stop(&capmon);
 		break;
 	}
 
