@@ -20,6 +20,9 @@ bool kprobes_select_enabled(struct capmon *cm)
 
 	f = fopen(KPROBES_DIR"/kprobe_profile", "r");
 
+	if (!f)
+		return false;
+
 	while (fgets(buffer, BUFLEN, f)) {
 		for (p = cm->available_probes.lh_first; p != NULL; p = p->entries.le_next) {
 			if (strstr(buffer, p->name)) {
@@ -147,3 +150,19 @@ void kprobes_destroy(struct capmon *cm)
 			fprintf(stderr, "Unable to destroy kprobe \"%s\"\n", p->name);
 	}
 }
+
+/* Check if user is can to create kprobes */
+bool kprobes_can_read_write()
+{
+	FILE *fd = fopen(KPROBES_LOG, "a+");
+
+	if (!fd) {
+		ERR("insufficient permissions or kprobes not available.\n"
+		    "Consider running with sudo or adding the capability CAP_DAC_OVERRIDE\n");
+		return -EACCES;
+	}
+
+	fclose(fd);
+	return 0;
+}
+

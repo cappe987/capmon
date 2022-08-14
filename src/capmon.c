@@ -330,6 +330,10 @@ int parse_args(struct capmon *cm, enum run_mode *mode, int argc, char **argv)
 		*mode = RUNMODE_MONITOR;
 	}
 
+	err = kprobes_can_read_write();
+	if (err)
+		goto out;
+
 	if (!kprobes_select_enabled(cm)) {
 		if (cap_all) {
 			probe_select(cm, "capmon_all");
