@@ -178,6 +178,7 @@ void capmon_print(struct capmon *cm)
 {
 	printf("--- CAPMON ---\n");
 	printf("Summary mode: %d\n", cm->summary);
+	printf("Run mode: %d\n", cm->run_mode);
 	print_probes(cm);
 	print_filters(cm);
 

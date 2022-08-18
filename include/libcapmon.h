@@ -65,6 +65,13 @@ struct process_stats {
 	DECLARE_BITMAP(capabilities, CAP_LAST_CAP+1);
 };
 
+enum run_mode {
+	RUNMODE_NONE,
+	RUNMODE_MONITOR,
+	RUNMODE_ENA_BG,
+	RUNMODE_DIS_BG
+};
+
 struct capmon {
 	LIST_HEAD(available_probes, probe) available_probes;
 	LIST_HEAD(selected_probes, probe) selected_probes;
@@ -72,6 +79,7 @@ struct capmon {
 	LIST_HEAD(stats, process_stats) process_stats;
 	enum summary_mode summary;
 	bool in_background;
+	enum run_mode run_mode;
 	//struct available_probes *headp2;
 	//struct selected_probes *headp1;
 };

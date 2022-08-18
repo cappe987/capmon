@@ -50,14 +50,7 @@ void usage(void)
 	      stderr);
 }
 
-enum run_mode {
-	RUNMODE_NONE,
-	RUNMODE_MONITOR,
-	RUNMODE_ENA_BG,
-	RUNMODE_DIS_BG
-};
-
-int parse_args(struct capmon *cm, enum run_mode *mode, int argc, char **argv)
+int parse_args(struct capmon *cm, int argc, char **argv)
 {
 	int ena_bg = 0, dis_bg = 0, err = 0;
 	bool cap_all = false;
@@ -80,11 +73,11 @@ int parse_args(struct capmon *cm, enum run_mode *mode, int argc, char **argv)
 		switch (ch) {
 		case 'v':
 			VERSION();
-			*mode = RUNMODE_NONE;
+			cm->run_mode = RUNMODE_NONE;
 			goto out;
 		case 'h':
 			usage();
-			*mode = RUNMODE_NONE;
+			cm->run_mode = RUNMODE_NONE;
 			goto out;
 		case 'a':
 			cap_all = true;
@@ -131,11 +124,11 @@ int parse_args(struct capmon *cm, enum run_mode *mode, int argc, char **argv)
 		err = EINVAL;
 		goto out;
 	} else if (ena_bg) {
-		*mode = RUNMODE_ENA_BG;
+		cm->run_mode = RUNMODE_ENA_BG;
 	} else if (dis_bg) {
-		*mode = RUNMODE_DIS_BG;
+		cm->run_mode = RUNMODE_DIS_BG;
 	} else {
-		*mode = RUNMODE_MONITOR;
+		cm->run_mode = RUNMODE_MONITOR;
 	}
 
 	err = kprobes_can_read_write();
@@ -158,19 +151,18 @@ out:
 int main(int argc, char **argv)
 {
 	struct capmon capmon;
-	enum run_mode mode;
 	int err = 0;
 
 	capmon_init(&capmon);
 
-	err = parse_args(&capmon, &mode, argc, argv);
+	err = parse_args(&capmon, argc, argv);
 	if (err)
 		goto out;
 
-	/*capmon_print(&capmon);*/
+	capmon_print(&capmon);
 
 	/* TODO: proper error handling for background enable? */
-	switch (mode) {
+	switch (capmon.run_mode) {
 	case RUNMODE_NONE:
 		goto out;
 	case RUNMODE_MONITOR:
