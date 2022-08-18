@@ -59,7 +59,7 @@ enum run_mode {
 
 int parse_args(struct capmon *cm, enum run_mode *mode, int argc, char **argv)
 {
-	int ena_bg, dis_bg, err = 0;
+	int ena_bg = 0, dis_bg = 0, err = 0;
 	bool cap_all = false;
 	char ch;
 
