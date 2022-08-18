@@ -159,7 +159,7 @@ int main(int argc, char **argv)
 	if (err)
 		goto out;
 
-	capmon_print(&capmon);
+	/*capmon_print(&capmon);*/
 
 	/* TODO: proper error handling for background enable? */
 	switch (capmon.run_mode) {
