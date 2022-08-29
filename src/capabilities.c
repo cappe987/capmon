@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
 #include <string.h>
-#include <linux/capability.h>
 #include <errno.h>
 
 
