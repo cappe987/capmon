@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
 .cache/
+.clangd/
 compile_commands.json
 capmon
 build/
