@@ -6,6 +6,7 @@
 compile_commands.json
 capmon
 build/
+.output/
 
 
 # Prerequisites

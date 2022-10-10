@@ -27,6 +27,7 @@ add_executable(capmon ${SRC_FILES})
 target_include_directories(capmon PUBLIC
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_BINARY_DIR}/include
+	${PROJECT_BINARY_DIR}/bpf
 	)
 
 install(TARGETS capmon
@@ -35,6 +36,22 @@ install(TARGETS capmon
 install(TARGETS capmon
         CONFIGURATIONS Release
         RUNTIME DESTINATION bin)
+
+add_custom_target(libbpf
+	COMMAND 
+	mkdir "-p" "${PROJECT_BINARY_DIR}/bpf"
+	COMMAND
+	cp 
+	"${PROJECT_SOURCE_DIR}/bpftool/libbpf/src/*"
+	"${PROJECT_BINARY_DIR}/bpf"
+	)
+
+add_custom_target(bpf
+	WORKING_DIRECTORY
+	"${PROJECT_SOURCE_DIR}/src/bpf"
+	COMMAND
+	make
+	)
 
 add_custom_target(tar
 	COMMAND 
@@ -60,3 +77,4 @@ set_directory_properties(
 	PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
 	"${PROJECT_BINARY_DIR}/${PROJECT_NAME_VERSION}.tar.gz"
 	)
+
