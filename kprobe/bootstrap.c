@@ -10,7 +10,7 @@
 /*#include "../bpftool/libbpf/src/libbpf.h"*/
 #include <bpf/libbpf.h>
 #include "bootstrap.h"
-#include ".output/bootstrap.skel.h"
+#include "output/bootstrap.skel.h"
 
 static struct env {
 	bool verbose;
