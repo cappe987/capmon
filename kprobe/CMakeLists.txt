@@ -51,15 +51,16 @@ set(LIBBPF_LIBRARIES ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf.a)
 find_package(BpfObject REQUIRED)
 
 # Create an executable for each application
-file(GLOB apps *.bpf.c)
-foreach(app ${apps})
-  get_filename_component(app_stem ${app} NAME_WE)
+#file(GLOB apps *.bpf.c)
+#foreach(app ${apps})
+#get_filename_component(app_stem ${app} NAME_WE)
+set(kprobe bootstrap)
 
-  # Build object skeleton and depend skeleton on libbpf build
-  bpf_object(${app_stem} ${app_stem}.bpf.c)
-  add_dependencies(${app_stem}_skel bpftool)
-  add_dependencies(${app_stem}_skel libbpf)
+# Build object skeleton and depend skeleton on libbpf build
+bpf_object(${kprobe} ${kprobe}.bpf.c)
+add_dependencies(${kprobe}_skel bpftool)
+add_dependencies(${kprobe}_skel libbpf)
 
-  add_executable(${app_stem} ${app_stem}.c)
-  target_link_libraries(${app_stem} ${app_stem}_skel)
-endforeach()
+add_executable(${kprobe} ${kprobe}.c)
+target_link_libraries(${kprobe} ${kprobe}_skel)
+#endforeach()
