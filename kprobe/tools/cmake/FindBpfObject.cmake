@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+# SPDX-License-Identifier: GPL-2.0-only
+# SPDX-FileCopyrightText: 2021 Daniel Xu <dxu@dxuuu.xyz>
 
 #[=======================================================================[.rst:
 FindBpfObject
