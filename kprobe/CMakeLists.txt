@@ -6,13 +6,18 @@ project(examples)
 # Tell cmake where to find BpfObject module
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/tools/cmake)
 
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf)
+
+include(ProcessorCount)
+ProcessorCount(N)
+
 # Build vendored libbpf
 include(ExternalProject)
 ExternalProject_Add(libbpf
   PREFIX libbpf
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpftool/libbpf/src
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND make
+  BUILD_COMMAND COMMAND make -j${N}
     BUILD_STATIC_ONLY=1
     OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
     DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
@@ -29,11 +34,12 @@ ExternalProject_Add(bpftool
   PREFIX bpftool
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpftool/src
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND make
+  BUILD_COMMAND COMMAND make -j${N}
     OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
   BUILD_IN_SOURCE TRUE
   INSTALL_COMMAND ""
   STEP_TARGETS build
+  DEPENDS libbpf
 )
 
 # Set BpfObject input parameters -- note this is usually not necessary unless
@@ -51,7 +57,8 @@ foreach(app ${apps})
 
   # Build object skeleton and depend skeleton on libbpf build
   bpf_object(${app_stem} ${app_stem}.bpf.c)
-  add_dependencies(${app_stem}_skel libbpf-build)
+  add_dependencies(${app_stem}_skel bpftool)
+  add_dependencies(${app_stem}_skel libbpf)
 
   add_executable(${app_stem} ${app_stem}.c)
   target_link_libraries(${app_stem} ${app_stem}_skel)
