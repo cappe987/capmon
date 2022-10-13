@@ -13,6 +13,10 @@
 #include "version.h"
 #include "monitor.h"
 
+#include <bpf/libbpf.h>
+#include "bootstrap.h"
+#include "bootstrap.skel.h"
+
 void usage(void)
 {
 	fputs("capmon - Linux Capabilities Monitor\n"

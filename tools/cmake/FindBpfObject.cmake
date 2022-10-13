@@ -157,14 +157,15 @@ endif()
 # Public macro
 macro(bpf_object name input)
   set(BPF_C_FILE ${CMAKE_CURRENT_SOURCE_DIR}/${input})
-  set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${name}.bpf.o)
-  set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${name}.skel.h)
+  set(BPF_O_FILE ${CMAKE_CURRENT_BINARY_DIR}/${BPFOBJECT_DIR}/${name}.bpf.o)
+  set(BPF_SKEL_FILE ${CMAKE_CURRENT_BINARY_DIR}/${SKEL_DIR}/${name}.skel.h)
   set(OUTPUT_TARGET ${name}_skel)
 
   # Build BPF object file
   add_custom_command(OUTPUT ${BPF_O_FILE}
     COMMAND ${BPFOBJECT_CLANG_EXE} -g -O2 -target bpf -D__TARGET_ARCH_${ARCH}
-            ${CLANG_SYSTEM_INCLUDES} -I${GENERATED_VMLINUX_DIR}
+	    ${CLANG_SYSTEM_INCLUDES} -I${GENERATED_VMLINUX_DIR}
+	    -I${CMAKE_CURRENT_SOURCE_DIR}/include
             -isystem ${LIBBPF_INCLUDE_DIRS} -c ${BPF_C_FILE} -o ${BPF_O_FILE}
     VERBATIM
     DEPENDS ${BPF_C_FILE}

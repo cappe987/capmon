@@ -13,5 +13,4 @@ $ apt install clang libelf1 libelf-dev zlib1g-dev
 
 Depends on `CONFIG_DEBUG_INFO_BTF=y` for running
 
-
-
+fentry probes instead of boostrap thing?
