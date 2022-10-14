@@ -11,7 +11,7 @@
 #include <regex.h>
 
 #include "bits.h"
-#include "bootstrap.h"
+#include "bpf_event.h"
 
 #define ERR(str, ...) fprintf(stderr, "Error: "str, ##__VA_ARGS__)
 #define UNUSED(x) (void)(x)
