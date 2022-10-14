@@ -152,8 +152,6 @@ add_custom_target(distclean
 	COMMAND
 	make clean
 	COMMAND
-	rm -r ${PROJECT_BINARY_DIR}/include
-	COMMAND
 	rm -r ${PROJECT_BINARY_DIR}/bpftool
 	COMMAND
 	rm -r ${PROJECT_BINARY_DIR}/libbpf
