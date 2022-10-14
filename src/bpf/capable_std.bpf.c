@@ -14,10 +14,9 @@ struct {
 	__uint(max_entries, 256 * 1024);
 } rb SEC(".maps");
 
-const volatile unsigned long long min_duration_ns = 0;
+/*const volatile unsigned long long min_duration_ns = 0;*/
 
-SEC("fexit/ns_capable")
-int BPF_PROG(ns_capable_exit, struct user_namespace *ns, int cap, bool has_cap)
+int bpf_capable(struct user_namespace *ns, int cap, bool has_cap)
 {
 	struct task_struct *task;
 	unsigned fname_off;
@@ -48,3 +47,17 @@ int BPF_PROG(ns_capable_exit, struct user_namespace *ns, int cap, bool has_cap)
 	return 0;
 }
 
+SEC("fexit/ns_capable")
+int BPF_PROG(ns_capable_exit, struct user_namespace *ns, int cap, bool has_cap)
+{
+	return bpf_capable(ns, cap, has_cap);
+}
+
+SEC("fexit/capable_wrt_inode_uidgid")
+int BPF_PROG(capable_wrt_inode_uidgid_exit,
+	     struct user_namespace *ns,
+	     const struct inode *inode,
+	     int cap, bool has_cap)
+{
+	return bpf_capable(ns, cap, has_cap);
+}

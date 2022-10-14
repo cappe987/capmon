@@ -13,7 +13,7 @@
 #include "capabilities.h"
 #include "bpf_event.h"
 
-#include "std_capable.skel.h"
+#include "capable_std.skel.h"
 
 static volatile bool exiting = false;
 
@@ -93,7 +93,7 @@ static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va
 int run_monitor_mode(struct capmon *cm)
 {
 	struct ring_buffer *rb = NULL;
-	struct std_capable_bpf *skel;
+	struct capable_std_bpf *skel;
 	int err;
 
 	libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
@@ -105,7 +105,7 @@ int run_monitor_mode(struct capmon *cm)
 	signal(SIGTERM, sig_handler);
 
 	/* Load and verify BPF application */
-	skel = std_capable_bpf__open();
+	skel = capable_std_bpf__open();
 	if (!skel) {
 		fprintf(stderr, "Failed to open and load BPF skeleton\n");
 		return 1;
@@ -115,14 +115,14 @@ int run_monitor_mode(struct capmon *cm)
 	/*skel->rodata->min_duration_ns = env.min_duration_ms * 1000000ULL;*/
 
 	/* Load & verify BPF programs */
-	err = std_capable_bpf__load(skel);
+	err = capable_std_bpf__load(skel);
 	if (err) {
 		fprintf(stderr, "Failed to load and verify BPF skeleton\n");
 		goto cleanup;
 	}
 
 	/* Attach tracepoints */
-	err = std_capable_bpf__attach(skel);
+	err = capable_std_bpf__attach(skel);
 	if (err) {
 		fprintf(stderr, "Failed to attach BPF skeleton\n");
 		goto cleanup;
@@ -159,7 +159,7 @@ int run_monitor_mode(struct capmon *cm)
 cleanup:
 	/* Clean up */
 	ring_buffer__free(rb);
-	std_capable_bpf__destroy(skel);
+	capable_std_bpf__destroy(skel);
 
 	return err < 0 ? -err : 0;
 }

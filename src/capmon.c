@@ -119,30 +119,18 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 			goto out;
 	}
 
-	if (ena_bg && dis_bg) {
-		ERR("cannot enable and disable at the same time\n");
-		err = EINVAL;
-		goto out;
-	} else if (ena_bg) {
-		cm->run_mode = RUNMODE_ENA_BG;
-	} else if (dis_bg) {
-		cm->run_mode = RUNMODE_DIS_BG;
-	} else {
-		cm->run_mode = RUNMODE_MONITOR;
-	}
+	/*err = kprobes_can_read_write();*/
+	/*if (err)*/
+		/*goto out;*/
 
-	err = kprobes_can_read_write();
-	if (err)
-		goto out;
-
-	if (!kprobes_select_enabled(cm)) {
-		if (cap_all) {
-			probe_select(cm, "capmon_all");
-		} else {
-			probe_select(cm, "capmon_ns");
-			probe_select(cm, "capmon_inode");
-		}
-	}
+	/*if (!kprobes_select_enabled(cm)) {*/
+		/*if (cap_all) {*/
+			/*probe_select(cm, "capmon_all");*/
+		/*} else {*/
+			/*probe_select(cm, "capmon_ns");*/
+			/*probe_select(cm, "capmon_inode");*/
+		/*}*/
+	/*}*/
 
 out:
 	return err;
@@ -161,24 +149,7 @@ int main(int argc, char **argv)
 
 	/*capmon_print(&capmon);*/
 
-	/* TODO: proper error handling for background enable? */
-	switch (capmon.run_mode) {
-	case RUNMODE_NONE:
-		goto out;
-	case RUNMODE_MONITOR:
-		err = run_monitor_mode(&capmon);
-		if (err)
-			goto out;
-		break;
-	case RUNMODE_ENA_BG:
-		err = kprobes_start(&capmon);
-		if (err)
-			goto out;
-		break;
-	case RUNMODE_DIS_BG:
-		kprobes_stop(&capmon);
-		break;
-	}
+	run_monitor_mode(&capmon);
 
 out:
 	capmon_destroy(&capmon);
