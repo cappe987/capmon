@@ -9,7 +9,6 @@
 #include "debug.h"
 #include "capabilities.h"
 #include "libcapmon.h"
-#include "bootstrap.h"
 
 static void print_probes(struct capmon *cm)
 {

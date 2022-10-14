@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Copyright (c) 2020 Facebook
-#ifndef __BOOTSTRAP_H
-#define __BOOTSTRAP_H
+#ifndef _CAPMON_BPF_EVENT_H_
+#define _CAPMON_BPF_EVENT_H_
 
 #define TASK_COMM_LEN 16
-#define MAX_FILENAME_LEN 127
 
 #include <stdbool.h>
 
@@ -17,4 +16,4 @@ struct event {
 	unsigned long long timestamp;
 };
 
-#endif /* __BOOTSTRAP_H */
+#endif /* _CAPMON_BPF_EVENT_H_ */
