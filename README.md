@@ -95,6 +95,7 @@ combine the arguments.
 - Check for possible out of range indexing in the code
 - Write tests (and possibly test framework)
 - Filter out capmons own checks on startup (only present with `-a`)?
+- Re-add daemon mode? Not sure if I want this.
 
 # Issues
 - If starting with sudo, it will not properly exit if sudo timeout is reached
