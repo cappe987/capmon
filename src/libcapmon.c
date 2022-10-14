@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "capabilities.h"
 #include "libcapmon.h"
+#include "bootstrap.h"
 
 static void print_probes(struct capmon *cm)
 {
@@ -122,7 +123,7 @@ out_err:
 	return -EINVAL;
 }
 
-void stats_add_cap(struct capmon *cm, struct log_entry *entry)
+void stats_add_cap(struct capmon *cm, const struct event *e)
 {
 	struct process_stats *ps;
 
@@ -130,11 +131,11 @@ void stats_add_cap(struct capmon *cm, struct log_entry *entry)
 		return;
 
 	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
-		if (cm->summary == SUMMARY_COMM && strcmp(entry->comm, ps->comm) == 0) {
-			set_bit(entry->cap, ps->capabilities);
+		if (cm->summary == SUMMARY_COMM && strcmp(e->comm, ps->comm) == 0) {
+			set_bit(e->cap, ps->capabilities);
 			return;
-		} else if (cm->summary == SUMMARY_PID && entry->pid == ps->pid) {
-			set_bit(entry->cap, ps->capabilities);
+		} else if (cm->summary == SUMMARY_PID && e->pid == ps->pid) {
+			set_bit(e->cap, ps->capabilities);
 			return;
 		}
 	}
@@ -147,11 +148,11 @@ void stats_add_cap(struct capmon *cm, struct log_entry *entry)
 		return;
 
 	if (cm->summary == SUMMARY_PID)
-		ps->pid = entry->pid;
+		ps->pid = e->pid;
 
-	strncpy(ps->comm, entry->comm, COMM_NAME_LEN);
+	strncpy(ps->comm, e->comm, COMM_NAME_LEN);
 
-	set_bit(entry->cap, ps->capabilities);
+	set_bit(e->cap, ps->capabilities);
 	LIST_INSERT_HEAD(&cm->process_stats, ps, entries);
 }
 

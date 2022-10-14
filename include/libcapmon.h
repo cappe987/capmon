@@ -11,6 +11,7 @@
 #include <regex.h>
 
 #include "bits.h"
+#include "bootstrap.h"
 
 #define ERR(str, ...) fprintf(stderr, "Error: "str, ##__VA_ARGS__)
 #define UNUSED(x) (void)(x)
@@ -86,7 +87,7 @@ struct capmon {
 
 int probe_select(struct capmon *cm, char *name);
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg);
-void stats_add_cap(struct capmon *cm, struct log_entry *entry);
+void stats_add_cap(struct capmon *cm, const struct event *e);
 void stats_print_summary(struct capmon *cm);
 void capmon_print(struct capmon *cm);
 int capmon_init(struct capmon *cm);
