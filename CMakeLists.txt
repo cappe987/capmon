@@ -125,10 +125,14 @@ add_custom_target(dist
 	"-r"
 	"../CMakeLists.txt"
 	"../LICENSE"
+	"../LICENSES"
 	"../README.md"
 	"../.gitignore"
+	"../.gitmodules"
 	"../include"
 	"../src"
+	"../bpftool"
+	"../tools"
 	"${PROJECT_NAME_VERSION}"
 	COMMAND 
 	tar 
