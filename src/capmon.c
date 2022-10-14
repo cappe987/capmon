@@ -53,7 +53,6 @@ void usage(void)
 int parse_args(struct capmon *cm, int argc, char **argv)
 {
 	int ena_bg = 0, dis_bg = 0, err = 0;
-	bool cap_all = false;
 	char ch;
 
 	struct option long_options[] = {
@@ -80,7 +79,7 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 			cm->run_mode = RUNMODE_NONE;
 			goto out;
 		case 'a':
-			cap_all = true;
+			cm->cap_all = true;
 			break;
 		case 'p':
 			err = filter_create(cm, FILTER_PID, optarg);
@@ -118,19 +117,6 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 		if (err)
 			goto out;
 	}
-
-	/*err = kprobes_can_read_write();*/
-	/*if (err)*/
-		/*goto out;*/
-
-	/*if (!kprobes_select_enabled(cm)) {*/
-		/*if (cap_all) {*/
-			/*probe_select(cm, "capmon_all");*/
-		/*} else {*/
-			/*probe_select(cm, "capmon_ns");*/
-			/*probe_select(cm, "capmon_inode");*/
-		/*}*/
-	/*}*/
 
 out:
 	return err;

@@ -81,6 +81,7 @@ struct capmon {
 	enum summary_mode summary;
 	bool in_background;
 	enum run_mode run_mode;
+	bool cap_all;
 	//struct available_probes *headp2;
 	//struct selected_probes *headp1;
 };
