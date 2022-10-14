@@ -75,6 +75,7 @@ endmacro()
 
 # BPF Objects
 make_bpf_object(capable_std)
+make_bpf_object(capable_all)
 
 cmake_minimum_required(VERSION 3.12)
 

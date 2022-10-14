@@ -14,7 +14,7 @@ struct {
 	__uint(max_entries, 256 * 1024);
 } rb SEC(".maps");
 
-int bpf_capable(struct user_namespace *ns, int cap, bool has_cap)
+int bpf_capable(struct user_namespace *ns, int cap, int err)
 {
 	struct task_struct *task;
 	unsigned fname_off;
@@ -37,7 +37,7 @@ int bpf_capable(struct user_namespace *ns, int cap, bool has_cap)
 	e->pid = pid;
 	e->ppid = BPF_CORE_READ(task, real_parent, tgid);
 	e->cap = cap;
-	e->has_cap = has_cap;
+	e->has_cap = !err; /* cap_capable returns err value. err=0 means has cap */
 	bpf_get_current_comm(&e->comm, sizeof(e->comm));
 
 	/* successfully submit it to user-space for post-processing */
@@ -48,7 +48,7 @@ int bpf_capable(struct user_namespace *ns, int cap, bool has_cap)
 SEC("fexit/cap_capable")
 int BPF_PROG(cap_capable_exit, const struct cred *cred,
 	     struct user_namespace *ns,
-	     int cap, unsigned int opts, bool has_cap)
+	     int cap, unsigned int opts, int err)
 {
-	return bpf_capable(ns, cap, has_cap);
+	return bpf_capable(ns, cap, err);
 }

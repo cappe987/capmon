@@ -179,7 +179,8 @@ void capmon_print(struct capmon *cm)
 	printf("--- CAPMON ---\n");
 	printf("Summary mode: %d\n", cm->summary);
 	printf("Run mode: %d\n", cm->run_mode);
-	print_probes(cm);
+	printf("Cap_all: %d\n", cm->cap_all);
+	/*print_probes(cm);*/
 	print_filters(cm);
 
 	printf("\n--------------\n");
@@ -212,6 +213,7 @@ int capmon_init(struct capmon *cm)
 
 	cm->summary = SUMMARY_NONE;
 	cm->in_background = false;
+	cm->cap_all = false;
 
 	return 0;
 }

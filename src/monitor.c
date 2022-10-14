@@ -14,6 +14,7 @@
 #include "bpf_event.h"
 
 #include "capable_std.skel.h"
+#include "capable_all.skel.h"
 
 static volatile bool exiting = false;
 
@@ -90,10 +91,51 @@ static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va
 	return vfprintf(stderr, format, args);
 }
 
+#define INIT_BPFOBJ(OBJ) \
+int OBJ##_init(struct ring_buffer **rb, struct OBJ##_bpf **skel, struct capmon *cm){\
+	int err;\
+\
+	/* Load and verify BPF application */\
+	*skel = OBJ##_bpf__open();\
+	if (!skel) {\
+		fprintf(stderr, "Failed to open and load BPF skeleton\n");\
+		return 1;\
+	}\
+\
+	/* Parameterize BPF code with minimum duration parameter */\
+	/*skel->rodata->min_duration_ns = env.min_duration_ms * 1000000ULL;*/\
+\
+	/* Load & verify BPF programs */\
+	err = OBJ##_bpf__load(*skel);\
+	if (err) {\
+		fprintf(stderr, "Failed to load and verify BPF skeleton\n");\
+		return err;\
+	}\
+\
+	/* Attach tracepoints */\
+	err = OBJ##_bpf__attach(*skel);\
+	if (err) {\
+		fprintf(stderr, "Failed to attach BPF skeleton\n");\
+		return err;\
+	}\
+	/* Set up ring buffer polling */\
+	*rb = ring_buffer__new(bpf_map__fd((*skel)->maps.rb), handle_event, cm, NULL);\
+	if (!(*rb)) {\
+		err = -1;\
+		fprintf(stderr, "Failed to create ring buffer\n");\
+		return err;\
+	}\
+	return 0;\
+}
+
+INIT_BPFOBJ(capable_std)
+INIT_BPFOBJ(capable_all)
+
 int run_monitor_mode(struct capmon *cm)
 {
 	struct ring_buffer *rb = NULL;
-	struct capable_std_bpf *skel;
+	struct capable_std_bpf *skel_std;
+	struct capable_all_bpf *skel_all;
 	int err;
 
 	libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
@@ -104,37 +146,13 @@ int run_monitor_mode(struct capmon *cm)
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 
-	/* Load and verify BPF application */
-	skel = capable_std_bpf__open();
-	if (!skel) {
-		fprintf(stderr, "Failed to open and load BPF skeleton\n");
-		return 1;
-	}
+	if (cm->cap_all)
+		err = capable_all_init(&rb, &skel_all, cm);
+	else
+		err = capable_std_init(&rb, &skel_std, cm);
 
-	/* Parameterize BPF code with minimum duration parameter */
-	/*skel->rodata->min_duration_ns = env.min_duration_ms * 1000000ULL;*/
-
-	/* Load & verify BPF programs */
-	err = capable_std_bpf__load(skel);
-	if (err) {
-		fprintf(stderr, "Failed to load and verify BPF skeleton\n");
+	if (err)
 		goto cleanup;
-	}
-
-	/* Attach tracepoints */
-	err = capable_std_bpf__attach(skel);
-	if (err) {
-		fprintf(stderr, "Failed to attach BPF skeleton\n");
-		goto cleanup;
-	}
-
-	/* Set up ring buffer polling */
-	rb = ring_buffer__new(bpf_map__fd(skel->maps.rb), handle_event, cm, NULL);
-	if (!rb) {
-		err = -1;
-		fprintf(stderr, "Failed to create ring buffer\n");
-		goto cleanup;
-	}
 
 	/* Process events */
 	printf("----------------------------------------------\n");
@@ -159,7 +177,10 @@ int run_monitor_mode(struct capmon *cm)
 cleanup:
 	/* Clean up */
 	ring_buffer__free(rb);
-	capable_std_bpf__destroy(skel);
+	if (cm->cap_all)
+		capable_all_bpf__destroy(skel_all);
+	else
+		capable_std_bpf__destroy(skel_std);
 
 	return err < 0 ? -err : 0;
 }
