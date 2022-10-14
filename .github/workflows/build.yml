@@ -1,0 +1,32 @@
+name: Bob the Builder
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Checkout submodules
+        run: |
+          git submodule update --init --recursive
+      - name: Install dependencies
+        run: |
+          sudo apt install libelf-dev llvm
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=RELEASE ..
+      - name: Build
+        run: |
+          cd build
+          make
