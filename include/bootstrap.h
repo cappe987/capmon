@@ -6,14 +6,15 @@
 #define TASK_COMM_LEN 16
 #define MAX_FILENAME_LEN 127
 
+#include <stdbool.h>
+
 struct event {
 	int pid;
 	int ppid;
-	unsigned exit_code;
-	unsigned long long duration_ns;
 	char comm[TASK_COMM_LEN];
-	char filename[MAX_FILENAME_LEN];
-	bool exit_event;
+	int cap; /* Capability ID */
+	bool has_cap; /* User has capability */
+	unsigned long long timestamp;
 };
 
 #endif /* __BOOTSTRAP_H */

@@ -7,53 +7,23 @@
 #include <string.h>
 #include <signal.h>
 
+#include <bpf/libbpf.h>
 #include "monitor.h"
 #include "kprobes.h"
 #include "capabilities.h"
+#include "bootstrap.h"
 
-static bool keep_running;
+#include "bootstrap.skel.h"
 
-static int parse_entry(char *line, int len, struct log_entry *entry)
+static volatile bool exiting = false;
+
+static void sig_handler(int sig)
 {
-	char *ptr;
-	int comm_len;
-/*
- * Sample line from /sys/log/debug/tracing/trace:
-systemd-journal-525     [002] ...1. 16449.937047: capmon_ns: (ns_capable+0x0/0x50) cap=0x13 comm="systemd-journal"
-*/
-	if (len <= 37) /* Avoid out of bounds access */
-		return -EINVAL;
-
-	ptr = line + 17;
-	entry->pid = atoi(ptr);
-
-	ptr = line + 37;
-	entry->time = atol(ptr);
-
-	ptr = strstr(line, "cap=");
-	if (!ptr)
-		return -EINVAL;
-
-	ptr += 6;
-	entry->cap = strtol(ptr, NULL, 16);
-
-	ptr = strstr(line, "comm=");
-	if (!ptr)
-		return -EINVAL;
-
-	ptr += 6;
-	for (comm_len = 0;
-	     ptr[comm_len] != '"' && comm_len < COMM_NAME_LEN;
-	     comm_len++) {
-	}
-
-	strncpy(entry->comm, ptr, comm_len);
-	entry->comm[comm_len] = '\0';
-
-	return 0;
+	UNUSED(sig);
+	exiting = true;
 }
 
-static bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
+static bool filter_match_entry(struct capmon *cm, const struct event *e)
 {
 	struct filter *f;
 	bool pid_filter = false;
@@ -70,120 +40,126 @@ static bool filter_match_entry(struct capmon *cm, struct log_entry *entry)
 		switch (f->type) {
 		case FILTER_PID:
 			pid_filter = true;
-			if (entry->pid == f->pid)
+			if (e->pid == f->pid)
 				pid_match = true;
 			break;
 		case FILTER_CAP:
 			cap_filter = true;
-			if (entry->cap == f->cap)
+			if (e->cap == f->cap)
 				cap_match = true;
 			break;
 		case FILTER_COMM:
 			comm_filter = true;
-			res = regexec(&f->comm, entry->comm, nmatch, pmatch, 0);
+			res = regexec(&f->comm, e->comm, nmatch, pmatch, 0);
 			if (res == 0)
 				comm_match = true;
 			break;
 		}
 	}
-	/* if there is no filter of that type, return true for it. Else use match result */
+	/* If there is no filter of that type, return true for it. Else use match result */
 	return (!pid_filter || pid_match) && (!cap_filter || cap_match) && (!comm_filter || comm_match);
 }
 
-static void print_log_entry(struct log_entry *entry)
+static int handle_event(void *ctx, void *data, size_t data_sz)
 {
-	printf("%-8ld  %-16s  %-7d  %-22s\n",
-	       entry->time,
-	       entry->comm,
-	       entry->pid,
-	       cap_to_str(entry->cap));
+	const struct event *e = data;
+	struct capmon *cm = ctx;
+
+	UNUSED(data_sz);
+	UNUSED(ctx);
+
+	if (!filter_match_entry(cm, e))
+		return 0;
+
+	stats_add_cap(cm, e);
+
+	printf("%-16s  %-7d  %-7d  %-22s %s\n",
+	       e->comm,
+	       e->pid,
+	       e->ppid,
+	       cap_to_str(e->cap),
+	       e->has_cap ? "True" : "False");
+
+	return 0;
 }
 
-static int probe_monitor(struct capmon *cm)
+static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va_list args)
 {
-	char linebuffer[BUFSIZE];
-	struct log_entry entry;
-	FILE *logfile;
-	int pos, err, counter;
-	struct timeval second;
-	char ch;
-
-	second.tv_sec = 0;
-	second.tv_usec = 100000; /* Sleep 1ms */
-	counter = 0;
-	pos = 0;
-
-	logfile = fopen(KPROBES_LOG, "r");
-	if (!logfile)
-		return errno;
-
-	printf("-----------------------------------------------\n");
-	printf("Time    | Process         | Pid    | Capability\n");
-	printf("-----------------------------------------------\n");
-
-	while (true) {
-		while ((ch = getc(logfile)) != EOF && keep_running) {
-
-			// TODO: Handle idx out of range in buffer?
-			linebuffer[pos] = ch;
-			pos++;
-			if (ch == '\n') {
-				linebuffer[pos] = '\0';
-				err = parse_entry(linebuffer, pos, &entry);
-				if (!err && filter_match_entry(cm, &entry)) {
-					print_log_entry(&entry);
-					stats_add_cap(cm, &entry);
-				}
-				pos = 0;
-				counter++;
-			}
-		}
-
-		if (!keep_running)
-			break;
-
-		if (ferror(logfile))
-			break;
-
-		clearerr(logfile);
-		(void)fflush(stdout);
-
-		if (select(0, NULL, NULL, NULL, &second) == -1)
-			break;
-	}
-	fclose(logfile);
-	printf("\n");
-
-	if (cm->summary)
-		stats_print_summary(cm);
-	return errno;
-}
-
-static void sig_handler(int signo)
-{
-	UNUSED(signo);
-	keep_running = false;
+	if (level == LIBBPF_DEBUG)
+		return 0;
+	return vfprintf(stderr, format, args);
 }
 
 int run_monitor_mode(struct capmon *cm)
 {
-	int err = 0;
+	struct ring_buffer *rb = NULL;
+	struct bootstrap_bpf *skel;
+	int err;
 
-	if (!cm->in_background) {
-		err = kprobes_start(cm);
-		if (err)
-			return 0;
-	} else {
-		printf("Attaching to active kprobe monitor\n");
+	libbpf_set_strict_mode(LIBBPF_STRICT_ALL);
+	/* Set up libbpf errors and debug info callback */
+	libbpf_set_print(libbpf_print_fn);
+
+	/* Cleaner handling of Ctrl-C */
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, sig_handler);
+
+	/* Load and verify BPF application */
+	skel = bootstrap_bpf__open();
+	if (!skel) {
+		fprintf(stderr, "Failed to open and load BPF skeleton\n");
+		return 1;
 	}
 
-	keep_running = true;
-	signal(SIGINT, sig_handler);
+	/* Parameterize BPF code with minimum duration parameter */
+	/*skel->rodata->min_duration_ns = env.min_duration_ms * 1000000ULL;*/
 
-	probe_monitor(cm);
+	/* Load & verify BPF programs */
+	err = bootstrap_bpf__load(skel);
+	if (err) {
+		fprintf(stderr, "Failed to load and verify BPF skeleton\n");
+		goto cleanup;
+	}
 
-	if (!cm->in_background)
-		kprobes_stop(cm);
+	/* Attach tracepoints */
+	err = bootstrap_bpf__attach(skel);
+	if (err) {
+		fprintf(stderr, "Failed to attach BPF skeleton\n");
+		goto cleanup;
+	}
 
-	return 0;
+	/* Set up ring buffer polling */
+	rb = ring_buffer__new(bpf_map__fd(skel->maps.rb), handle_event, cm, NULL);
+	if (!rb) {
+		err = -1;
+		fprintf(stderr, "Failed to create ring buffer\n");
+		goto cleanup;
+	}
+
+	/* Process events */
+	printf("----------------------------------------------\n");
+	printf("PROCESS         | PID    | PPID   | Capability\n");
+	printf("----------------------------------------------\n");
+	while (!exiting) {
+		err = ring_buffer__poll(rb, 100 /* timeout, ms */);
+		/* Ctrl-C will cause -EINTR */
+		if (err == -EINTR) {
+			err = 0;
+			break;
+		}
+		if (err < 0) {
+			printf("Error polling perf buffer: %d\n", err);
+			break;
+		}
+	}
+
+	printf("\n");
+	stats_print_summary(cm);
+
+cleanup:
+	/* Clean up */
+	ring_buffer__free(rb);
+	bootstrap_bpf__destroy(skel);
+
+	return err < 0 ? -err : 0;
 }
