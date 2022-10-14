@@ -74,7 +74,7 @@ macro(make_bpf_object name)
 endmacro()
 
 # BPF Objects
-make_bpf_object(std_capable)
+make_bpf_object(capable_std)
 
 cmake_minimum_required(VERSION 3.12)
 
@@ -103,6 +103,7 @@ add_executable(capmon ${SRC_FILES})
 target_include_directories(capmon PUBLIC
 	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_BINARY_DIR}/include
+	${PROJECT_BINARY_DIR}/bpftool
 	${PROJECT_BINARY_DIR}/libbpf
 )
 
@@ -135,10 +136,18 @@ add_custom_target(dist
 	"${PROJECT_NAME_VERSION}/"
 )
 
+set_directory_properties(
+       PROPERTY ADDITIONAL_MAKE_CLEAN_FILES
+       "${PROJECT_BINARY_DIR}/include"
+)
+
+
 # Remove dependency builds as well
 add_custom_target(distclean
 	COMMAND
 	make clean
+	COMMAND
+	rm -r ${PROJECT_BINARY_DIR}/include
 	COMMAND
 	rm -r ${PROJECT_BINARY_DIR}/bpftool
 	COMMAND
