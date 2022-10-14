@@ -9,7 +9,6 @@
 #include <getopt.h>
 #include <regex.h>
 
-#include "kprobes.h"
 #include "version.h"
 #include "monitor.h"
 

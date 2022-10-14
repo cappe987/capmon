@@ -32,8 +32,6 @@ make
 sudo make install
 ```
 
-Depends on kernel config `CONFIG_KPROBE_EVENTS` to run.
-
 # Usage
 Start monitoring capability checks.
 ```
@@ -93,69 +91,18 @@ capmon tcpdump trafgen -a -s name -c CAP_NET_RAW -c CAP_NET_ADMIN
 This particular combination may not be very useful, but it shows how you can
 combine the arguments.
 
-## Running in background
-
-Start or stop monitoring in the background. Can only be combined with `-a`.
-After enabling it you can view and filter the output by running `capmon` as
-shown above.
-```
-capmon --enable
-capmon --disable
-```
-
 # To-do list
 - Check for possible out of range indexing in the code
 - Write tests (and possibly test framework)
-- Add `touch` to check if user is allowed to add kprobes before actually doing it
-- Filter out capmons own checks on startup?
-- Return value of cap check?
+- Filter out capmons own checks on startup (only present with `-a`)?
 
 # Issues
-- Killing it with SIGKILL will leave the kprobes active. Can be removed with
-  `capmon --disable`.
 - If starting with sudo, it will not properly exit if sudo timeout is reached
   (i.e. when you need to enter your password again). `Interrupted system call`.
-  But will still remove the probes. Why?
+  But will still remove the probes. Why? (STILL AN ISSUE?)
 - To get correct comm names (process names) you can do `sudo sh` and run the commands. 
-  Otherwise, the desktop manager may take over the name.
+  Otherwise, the desktop manager may take over the name. (STILL AN ISSUE?)
 - Note that some kernel functions will call `cap_capable` directly, instead of
   going through the other functions. Or they use some other less-common path.
 
 
-
-# Notes on ktraceprobes
-
-
-## Create kprobe
-echo 'p:myprobe ns_capable cap=$arg2 comm=$comm' > /sys/kernel/debug/tracing/kprobe_events
-echo 1 > /sys/kernel/debug/tracing/events/kprobes/myprobe/enable
-
-## Output log
-cat /sys/kernel/debug/tracing/trace
-
-## Remove
-echo 0 > /sys/kernel/debug/tracing/events/kprobes/myprobe/enable
-echo -:myprobe >> /sys/kernel/debug/tracing/kprobe_events
-
-## Clear log
-echo 0 > /sys/kernel/debug/tracing/trace
-
-## Clear all kprobes
-echo > /sys/kernel/debug/tracing/kprobe_events
-
-
-
-# Temporary notes
-
-https://events19.linuxfoundation.org/wp-content/uploads/2017/12/oss-eu-2018-fun-with-dynamic-trace-events_steven-rostedt.pdf
-
-
-<!--echo 'p:capmon_ns ns_capable cap=$arg2 comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events-->
-<!--echo 'p:capmon_ns ns_capable cap=+2($stack) comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events-->
-echo 'p:capmon_ns cap_capable cap=+4($arg1):u32 comm=$comm' >> /sys/kernel/debug/tracing/kprobe_events
-echo 1 > /sys/kernel/debug/tracing/events/kprobes/capmon_ns/enable
-
-cat /sys/kernel/debug/tracing/trace
-
-echo 0 > /sys/kernel/debug/tracing/events/kprobes/capmon_ns/enable
-echo -:capmon_ns >> /sys/kernel/debug/tracing/kprobe_events
