@@ -24,7 +24,7 @@ of `ip netns add` it requires both `CAP_SYS_ADMIN` and `CAP_DAC_OVERRIDE`.
 
 # Installation
 ```
-git update --init --recursive
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
