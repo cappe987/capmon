@@ -20,14 +20,6 @@
 #define CAP_NAME_LEN 22
 #define REGEX_LEN 200
 
-struct probe {
-	LIST_ENTRY(probe) entries;
-	char name[NAME_LEN];
-	char function[NAME_LEN];
-	/* Index of the argument `int capability`, index starts at 1 */
-	int cap_argnum;
-};
-
 enum filtertypes {
 	FILTER_PID,
 	FILTER_CAP,
@@ -51,13 +43,6 @@ struct filter {
 	char comm_pattern[REGEX_LEN];
 };
 
-struct log_entry {
-	char comm[COMM_NAME_LEN];
-	time_t time;
-	int pid;
-	int cap;
-};
-
 /* TODO: Replace with hash table later? */
 struct process_stats {
 	LIST_ENTRY(process_stats) entries;
@@ -74,8 +59,6 @@ enum run_mode {
 };
 
 struct capmon {
-	LIST_HEAD(available_probes, probe) available_probes;
-	LIST_HEAD(selected_probes, probe) selected_probes;
 	LIST_HEAD(filters, filter) filters;
 	LIST_HEAD(stats, process_stats) process_stats;
 	enum summary_mode summary;
@@ -86,11 +69,9 @@ struct capmon {
 	//struct selected_probes *headp1;
 };
 
-int probe_select(struct capmon *cm, char *name);
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg);
 void stats_add_cap(struct capmon *cm, const struct event *e);
 void stats_print_summary(struct capmon *cm);
-void capmon_print(struct capmon *cm);
 int capmon_init(struct capmon *cm);
 void capmon_destroy(struct capmon *cm);
 

@@ -92,7 +92,6 @@ set(PROJECT_NAME_VERSION "${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}")
 set(SRC_FILES
 	capmon.c
 	capabilities.c
-	kprobes.c
 	libcapmon.c
 	monitor.c
 )

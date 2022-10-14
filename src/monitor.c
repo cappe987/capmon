@@ -9,7 +9,6 @@
 
 #include <bpf/libbpf.h>
 #include "monitor.h"
-#include "kprobes.h"
 #include "capabilities.h"
 #include "bpf_event.h"
 

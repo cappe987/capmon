@@ -10,19 +10,6 @@
 #include "capabilities.h"
 #include "libcapmon.h"
 
-static void print_probes(struct capmon *cm)
-{
-	struct probe *p;
-
-	printf("\n--- Available probes ---\n");
-	for (p = cm->available_probes.lh_first; p != NULL; p = p->entries.le_next)
-		printf("Probe: %s\n", p->name);
-
-	printf("\n--- Selected probes ---\n");
-	for (p = cm->selected_probes.lh_first; p != NULL; p = p->entries.le_next)
-		printf("Probe: %s\n", p->name);
-}
-
 static void print_filters(struct capmon *cm)
 {
 	struct filter *f;
@@ -41,38 +28,6 @@ static void print_filters(struct capmon *cm)
 			break;
 		}
 	}
-}
-
-static struct probe *init_probe_entry(char *name, char *function, int cap_argnum)
-{
-	struct probe *p = calloc(1, sizeof(struct probe));
-
-	if (!p)
-		return NULL;
-
-	strncpy(p->name, name, NAME_LEN);
-	strncpy(p->function, function, NAME_LEN);
-	p->cap_argnum = cap_argnum;
-	return p;
-}
-
-int probe_select(struct capmon *cm, char *name)
-{
-	struct probe *p, *p_copy;
-
-	for (p = cm->available_probes.lh_first; p != NULL; p = p->entries.le_next) {
-		DBG("Selecting... %s?\n", p->name);
-		if (strncmp(name, p->name, NAME_LEN) == 0) {
-			p_copy = init_probe_entry(p->name, p->function, p->cap_argnum);
-			if (!p_copy)
-				return -ENOMEM;
-			LIST_INSERT_HEAD(&cm->selected_probes, p_copy, entries);
-			DBG("Found %s\n", p->name);
-			return 0;
-		}
-	}
-	fprintf(stderr, "Unable to find capmon probe \"%s\"\n", name);
-	return -ENOENT;
 }
 
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
@@ -180,7 +135,6 @@ void capmon_print(struct capmon *cm)
 	printf("Summary mode: %d\n", cm->summary);
 	printf("Run mode: %d\n", cm->run_mode);
 	printf("Cap_all: %d\n", cm->cap_all);
-	/*print_probes(cm);*/
 	print_filters(cm);
 
 	printf("\n--------------\n");
@@ -188,28 +142,8 @@ void capmon_print(struct capmon *cm)
 
 int capmon_init(struct capmon *cm)
 {
-	struct probe *p;
-
-	LIST_INIT(&cm->available_probes);
-	LIST_INIT(&cm->selected_probes);
 	LIST_INIT(&cm->filters);
 	LIST_INIT(&cm->process_stats);
-
-	/* Add available probes */
-	p = init_probe_entry("capmon_all", "cap_capable", 3);
-	if (!p)
-		return -ENOMEM;
-	LIST_INSERT_HEAD(&cm->available_probes, p, entries);
-
-	p = init_probe_entry("capmon_inode", "capable_wrt_inode_uidgid", 3);
-	if (!p)
-		return -ENOMEM;
-	LIST_INSERT_HEAD(&cm->available_probes, p, entries);
-
-	p = init_probe_entry("capmon_ns", "ns_capable", 2);
-	if (!p)
-		return -ENOMEM;
-	LIST_INSERT_HEAD(&cm->available_probes, p, entries);
 
 	cm->summary = SUMMARY_NONE;
 	cm->in_background = false;
@@ -220,21 +154,8 @@ int capmon_init(struct capmon *cm)
 
 void capmon_destroy(struct capmon *cm)
 {
-	struct probe *p;
 	struct filter *f;
 	struct process_stats *ps;
-
-	while (cm->selected_probes.lh_first != NULL) {
-		p = cm->selected_probes.lh_first;
-		LIST_REMOVE(cm->selected_probes.lh_first, entries);
-		free(p);
-	}
-
-	while (cm->available_probes.lh_first != NULL) {
-		p = cm->available_probes.lh_first;
-		LIST_REMOVE(cm->available_probes.lh_first, entries);
-		free(p);
-	}
 
 	while (cm->filters.lh_first != NULL) {
 		f = cm->filters.lh_first;
