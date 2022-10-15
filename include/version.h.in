@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
-#ifndef _CAPMON_VERSION_H
-#define _CAPMON_VERSION_H
+#ifndef _CAPMON_VERSION_H_
+#define _CAPMON_VERSION_H_
 
 #define capmon_VERSION_MAJOR @capmon_VERSION_MAJOR@
 #define capmon_VERSION_MINOR @capmon_VERSION_MINOR@
 
 #define VERSION() fprintf(stderr, "capmon-%d.%d\n", capmon_VERSION_MAJOR, capmon_VERSION_MINOR);
 
-#endif /* _CAPMON_VERSION_H */
+#endif /* _CAPMON_VERSION_H_ */

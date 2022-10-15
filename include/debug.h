@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
-#ifndef _CAPMON_DEBUG_H
-#define _CAPMON_DEBUG_H
+#ifndef _CAPMON_DEBUG_H_
+#define _CAPMON_DEBUG_H_
 
 
 #define DEBUG false
@@ -14,4 +14,4 @@
 #endif
 
 
-#endif /* _CAPMON_DEBUG_H */
+#endif /* _CAPMON_DEBUG_H_ */

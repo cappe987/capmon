@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
-#ifndef _CAPMON_LIBCAPMON_H
-#define _CAPMON_LIBCAPMON_H
+#ifndef _CAPMON_LIBCAPMON_H_
+#define _CAPMON_LIBCAPMON_H_
 
 #include <stdlib.h>
 #include <linux/types.h>
@@ -65,8 +65,6 @@ struct capmon {
 	bool in_background;
 	enum run_mode run_mode;
 	bool cap_all;
-	//struct available_probes *headp2;
-	//struct selected_probes *headp1;
 };
 
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg);
@@ -75,4 +73,4 @@ void stats_print_summary(struct capmon *cm);
 int capmon_init(struct capmon *cm);
 void capmon_destroy(struct capmon *cm);
 
-#endif /* _CAPMON_LIBCAPMON_H */
+#endif /* _CAPMON_LIBCAPMON_H_ */
