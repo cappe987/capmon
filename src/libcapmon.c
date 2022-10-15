@@ -2,11 +2,9 @@
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
-#include "debug.h"
 #include "capabilities.h"
 #include "libcapmon.h"
 
@@ -75,6 +73,43 @@ out_regex_err:
 out_err:
 	free(filter);
 	return -EINVAL;
+}
+
+bool filter_match_entry(struct capmon *cm, const struct event *e)
+{
+	struct filter *f;
+	bool pid_filter = false;
+	bool pid_match = false;
+	bool cap_filter = false;
+	bool cap_match = false;
+	bool comm_filter = false;
+	bool comm_match = false;
+	regmatch_t pmatch[1];
+	size_t nmatch = 1;
+	int res;
+
+	for (f = cm->filters.lh_first; f != NULL; f = f->entries.le_next) {
+		switch (f->type) {
+		case FILTER_PID:
+			pid_filter = true;
+			if (e->pid == f->pid)
+				pid_match = true;
+			break;
+		case FILTER_CAP:
+			cap_filter = true;
+			if (e->cap == f->cap)
+				cap_match = true;
+			break;
+		case FILTER_COMM:
+			comm_filter = true;
+			res = regexec(&f->comm, e->comm, nmatch, pmatch, 0);
+			if (res == 0)
+				comm_match = true;
+			break;
+		}
+	}
+	/* If there is no filter of that type, return true for it. Else use match result */
+	return (!pid_filter || pid_match) && (!cap_filter || cap_match) && (!comm_filter || comm_match);
 }
 
 void stats_add_cap(struct capmon *cm, const struct event *e)

@@ -2,15 +2,12 @@
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <signal.h>
 #include <getopt.h>
-#include <regex.h>
 
 #include "version.h"
-#include "monitor.h"
+#include "libcapmon.h"
 
 void usage(void)
 {
@@ -39,24 +36,15 @@ void usage(void)
 	      "            Listen to ALL capability checks. By default it only listens to the functions\n"
 	      "            `ns_capable` and `capable_wrt_inode_uidgid`. This listens directly to the\n"
 	      "            `cap_capable` function.\n"
-	      "\n"
-	      "        --enable\n"
-	      "            Enable monitoring in background. Start program without --enable or --disable\n"
-	      "            to monitor.\n"
-	      "\n"
-	      "        --disable\n"
-	      "            Disable monitoring in background.\n",
-	      stderr);
+	      ,stderr);
 }
 
 int parse_args(struct capmon *cm, int argc, char **argv)
 {
-	int ena_bg = 0, dis_bg = 0, err = 0;
+	int err = 0;
 	char ch;
 
 	struct option long_options[] = {
-		{"enable",      no_argument, &ena_bg, 1   },
-		{"disable",     no_argument, &dis_bg, 1   },
 		{"version",     no_argument, NULL,            'v' },
 		{ "help",       no_argument, NULL,            'h' },
 		{ "all",        no_argument, NULL,            'a' },
