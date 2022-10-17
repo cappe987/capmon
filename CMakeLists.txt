@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.12)
 
-project(capmon VERSION 1.1)
+project(capmon VERSION 1.2)
 
 set(CMAKE_C_FLAGS
 	"${CMAKE_C_FLAGS} -Wall -Wpedantic -Wextra -Wno-gnu-zero-variadic-macro-arguments"
