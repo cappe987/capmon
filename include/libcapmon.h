@@ -9,6 +9,7 @@
 #include <linux/capability.h>
 #include <sys/queue.h>
 #include <regex.h>
+#include <search.h>
 
 #include "bits.h"
 #include "bpf_event.h"
@@ -58,9 +59,12 @@ enum run_mode {
 	RUNMODE_DIS_BG
 };
 
+typedef void* tree;
+
 struct capmon {
 	LIST_HEAD(filters, filter) filters;
 	LIST_HEAD(stats, process_stats) process_stats;
+	tree pid_tree;
 	enum summary_mode summary;
 	bool in_background;
 	enum run_mode run_mode;

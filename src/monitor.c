@@ -6,8 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-
-#include <search.h>
+#include <unistd.h>
 
 #include <bpf/libbpf.h>
 #include "libcapmon.h"
@@ -46,14 +45,40 @@ static int handle_cap_check(void *ctx, void *data, size_t data_sz)
 	return 0;
 }
 
+int key_cmp(const void *a, const void *b)
+{
+	return *(pid_t*)a - *(pid_t*)b;
+}
+
 static int handle_proc_start(void *ctx, void *data, size_t data_sz)
 {
 	const struct event_proc_start *e = data;
 	struct capmon *cm = ctx;
+	void *found;
+	pid_t *pid_p;
 	UNUSED(data_sz);
-	UNUSED(cm);
 
-	printf("Start %s\n", e->comm);
+	found = tfind(&e->pid, &cm->pid_tree, key_cmp);
+
+	if (found) {
+		printf("Pid %d already exists\n", e->pid);
+		return 0; /* Pid already accounted for */
+	}
+
+	/* Pid not found, check if parent is found */
+	found = tfind(&e->ppid, &cm->pid_tree, key_cmp);
+
+	if (found) {
+		printf("Pid %d's parent %d found\n", e->pid, e->ppid);
+		/* Parent found, keep track of child */
+		pid_p = malloc(sizeof(pid_t));
+		if (!pid_p) {
+			ERR("failed to allocate memory\n");
+			return -ENOMEM;
+		}
+		*pid_p = e->pid;
+		tsearch(pid_p, &cm->pid_tree, key_cmp);
+	}
 	return 0;
 }
 
@@ -95,6 +120,25 @@ INIT_BPFOBJ(capable_std)
 INIT_BPFOBJ(capable_all)
 INIT_BPFOBJ(proc_exec)
 
+/*https://stackoverflow.com/questions/22802902/how-to-get-pid-of-process-executed-with-system-command-in-c*/
+pid_t system2(const char *command)
+{
+    pid_t pid;
+
+    pid = fork();
+
+    if (pid < 0) {
+        return pid;
+    } else if (pid == 0) {
+        setsid();
+        execl("/bin/sh", "sh", "-c", command, NULL);
+        _exit(1);
+    }
+
+    return pid;
+}
+
+
 int run_monitor_mode(struct capmon *cm)
 {
 	struct ring_buffer *rb = NULL;
@@ -127,7 +171,6 @@ int run_monitor_mode(struct capmon *cm)
 			fprintf(stderr, "Failed to attach capable_all_bpf to ring buffer\n");
 			goto cleanup;
 		}
-
 	} else {
 		err = capable_std_init(&skel_std);
 		if (err)
@@ -139,8 +182,16 @@ int run_monitor_mode(struct capmon *cm)
 		}
 	}
 
-	if (err)
+	pid_t *root_pid = malloc(sizeof(pid_t));
+	if (!root_pid) {
+		err = -ENOMEM;
+		ERR("failed to allocate memory\n");
 		goto cleanup;
+	}
+
+	*root_pid = system2("/home/casan/test.sh");
+	tsearch(root_pid, &cm->pid_tree, key_cmp);
+	printf("Add initial pid %d\n", *root_pid);
 
 	/* Process events */
 	printf("----------------------------------------------\n");
