@@ -7,22 +7,15 @@ SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
 Monitor when processes check
 [capabilities(7)](https://man7.org/linux/man-pages/man7/capabilities.7.html) to
-find out what they require.
-
-If you want to run `ip netns add my_namespace` without sudo you would start
-`capmon`, possibly with "ip" as filter, and then run the command and see what
-capabilities `capmon` outputs. Note that the command may stop on the first
-failure, after adding the first capability you run it again and see if it still
-fails. If so, you should see a new capability be output by `capmon`. In the case
-of `ip netns add` it requires both `CAP_SYS_ADMIN` and `CAP_DAC_OVERRIDE`.
+find out what they require. Start `capmon` and run your program without sudo to
+see the capability it fails on.
 
 > Note: I do not know much about how capabilities works or how it's used in the
 > kernel. Capmon might show more than required. I do not yet know why the
 > kernel does all the extra checks.
 
-`capmon` itself requires `CAP_DAC_OVERRIDE` to run.
-
 # Installation
+
 ```
 git submodule update --init --recursive
 mkdir build
@@ -32,7 +25,23 @@ make
 sudo make install
 ```
 
+## Build dependencies (unsure about the kernel dependencies)
+
+```
+sudo apt install clang llvm libelf1 libelf-dev zlib1g-dev
+```
+- `CONFIG_PERF_EVENTS=y`?
+- Kernel >= 5.10? ([BPF CO-RE](
+  https://patchwork.ozlabs.org/project/buildroot/patch/29d2a8c7-44cd-da42-5fed-f17ec0f8ccf2@synopsys.com/))
+
+## Run dependencies
+
+- `CONFIG_DEBUG_INFO_BTF=y`
+- Linux kernel >= 5.8 (BPF ring buffer)
+
+
 # Usage
+
 Start monitoring capability checks.
 ```
 capmon
@@ -80,6 +89,7 @@ is interpreted as
 ```
 
 ## Example: combining arguments
+
 The example below displays only `tcpdump` and `trafgen` commands, will listen
 to ALL capability checks, will do a summary at the end based on the names
 (which will only be tcpdump and trafgen), and will only display if the
@@ -91,13 +101,21 @@ capmon tcpdump trafgen -a -s name -c CAP_NET_RAW -c CAP_NET_ADMIN
 This particular combination may not be very useful, but it shows how you can
 combine the arguments.
 
+## Using without sudo
+
+To use Capmon without sudo you must assign `CAP_DAC_OVERRIDE` to yourself and to
+`capmon`. Check out [this post by
+Troglobit](https://troglobit.com/2016/12/11/a-life-without-sudo/) on how to use
+capabilities.
+
 # To-do list
-- Check for possible out of range indexing in the code
+
 - Write tests (and possibly test framework)
 - Filter out capmons own checks on startup (only present with `-a`)?
 - Re-add daemon mode? Not sure if I want this.
 
 # Issues
+
 - If starting with sudo, it will not properly exit if sudo timeout is reached
   (i.e. when you need to enter your password again). `Interrupted system call`.
   But will still remove the probes. Why? (STILL AN ISSUE?)
