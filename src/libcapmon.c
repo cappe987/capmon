@@ -75,7 +75,7 @@ out_err:
 	return -EINVAL;
 }
 
-bool filter_match_entry(struct capmon *cm, const struct event *e)
+bool filter_match_entry(struct capmon *cm, const struct event_cap_check *e)
 {
 	struct filter *f;
 	bool pid_filter = false;
@@ -112,7 +112,7 @@ bool filter_match_entry(struct capmon *cm, const struct event *e)
 	return (!pid_filter || pid_match) && (!cap_filter || cap_match) && (!comm_filter || comm_match);
 }
 
-void stats_add_cap(struct capmon *cm, const struct event *e)
+void stats_add_cap(struct capmon *cm, const struct event_cap_check *e)
 {
 	struct process_stats *ps;
 

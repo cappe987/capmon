@@ -27,11 +27,10 @@ int handle_exec(struct trace_event_raw_sched_process_exec *ctx)
 {
 	struct task_struct *task;
 	/*unsigned fname_off;*/
-	struct event *e;
+	struct event_proc_start *e;
 	pid_t pid;
 	/*u64 ts;*/
 
-	/* remember time exec() was executed for this PID */
 	pid = bpf_get_current_pid_tgid() >> 32;
 	/*ts = bpf_ktime_get_ns();*/
 	/*bpf_map_update_elem(&exec_start, &pid, &ts, BPF_ANY);*/

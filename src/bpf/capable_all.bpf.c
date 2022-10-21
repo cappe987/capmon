@@ -18,7 +18,7 @@ int bpf_capable(struct user_namespace *ns, int cap, int err)
 {
 	struct task_struct *task;
 	unsigned fname_off;
-	struct event *e;
+	struct event_cap_check *e;
 	pid_t pid;
 	u64 ts;
 
@@ -28,8 +28,6 @@ int bpf_capable(struct user_namespace *ns, int cap, int err)
 	e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
 	if (!e)
 		return 0;
-
-	e->pid = pid;
 
 	/* fill out the sample with data */
 	task = (struct task_struct *)bpf_get_current_task();

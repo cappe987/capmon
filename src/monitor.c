@@ -16,6 +16,7 @@
 
 #include "capable_std.skel.h"
 #include "capable_all.skel.h"
+#include "proc_exec.skel.h"
 
 static volatile bool exiting = false;
 
@@ -25,11 +26,10 @@ static void sig_handler(int sig)
 	exiting = true;
 }
 
-static int handle_event(void *ctx, void *data, size_t data_sz)
+static int handle_cap_check(void *ctx, void *data, size_t data_sz)
 {
-	const struct event *e = data;
+	const struct event_cap_check *e = data;
 	struct capmon *cm = ctx;
-
 	UNUSED(data_sz);
 
 	if (!filter_match_entry(cm, e))
@@ -43,7 +43,17 @@ static int handle_event(void *ctx, void *data, size_t data_sz)
 	       e->ppid,
 	       cap_to_str(e->cap),
 	       e->has_cap ? "True" : "False");
+	return 0;
+}
 
+static int handle_proc_start(void *ctx, void *data, size_t data_sz)
+{
+	const struct event_proc_start *e = data;
+	struct capmon *cm = ctx;
+	UNUSED(data_sz);
+	UNUSED(cm);
+
+	printf("Start %s\n", e->comm);
 	return 0;
 }
 
@@ -55,7 +65,7 @@ static int libbpf_print_fn(enum libbpf_print_level level, const char *format, va
 }
 
 #define INIT_BPFOBJ(OBJ) \
-int OBJ##_init(struct ring_buffer **rb, struct OBJ##_bpf **skel, struct capmon *cm){\
+int OBJ##_init(struct OBJ##_bpf **skel){\
 	int err;\
 \
 	/* Load and verify BPF application */\
@@ -64,9 +74,6 @@ int OBJ##_init(struct ring_buffer **rb, struct OBJ##_bpf **skel, struct capmon *
 		fprintf(stderr, "Failed to open and load BPF skeleton\n");\
 		return 1;\
 	}\
-\
-	/* Parameterize BPF code with minimum duration parameter */\
-	/*skel->rodata->min_duration_ns = env.min_duration_ms * 1000000ULL;*/\
 \
 	/* Load & verify BPF programs */\
 	err = OBJ##_bpf__load(*skel);\
@@ -81,22 +88,17 @@ int OBJ##_init(struct ring_buffer **rb, struct OBJ##_bpf **skel, struct capmon *
 		fprintf(stderr, "Failed to attach BPF skeleton\n");\
 		return err;\
 	}\
-	/* Set up ring buffer polling */\
-	*rb = ring_buffer__new(bpf_map__fd((*skel)->maps.rb), handle_event, cm, NULL);\
-	if (!(*rb)) {\
-		err = -1;\
-		fprintf(stderr, "Failed to create ring buffer\n");\
-		return err;\
-	}\
 	return 0;\
 }
 
 INIT_BPFOBJ(capable_std)
 INIT_BPFOBJ(capable_all)
+INIT_BPFOBJ(proc_exec)
 
 int run_monitor_mode(struct capmon *cm)
 {
 	struct ring_buffer *rb = NULL;
+	struct proc_exec_bpf *skel_exec;
 	struct capable_std_bpf *skel_std;
 	struct capable_all_bpf *skel_all;
 	int err;
@@ -109,10 +111,33 @@ int run_monitor_mode(struct capmon *cm)
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, sig_handler);
 
-	if (cm->cap_all)
-		err = capable_all_init(&rb, &skel_all, cm);
-	else
-		err = capable_std_init(&rb, &skel_std, cm);
+	proc_exec_init(&skel_exec);
+	rb = ring_buffer__new(bpf_map__fd(skel_exec->maps.rb), handle_proc_start, cm, NULL);
+	if (!rb) {
+		err = -1;
+		fprintf(stderr, "Failed to create ring buffer\n");
+		goto cleanup;
+	}
+	if (cm->cap_all){
+		err = capable_all_init(&skel_all);
+		if (err)
+			goto cleanup;
+		err = ring_buffer__add(rb, bpf_map__fd(skel_all->maps.rb), handle_cap_check, cm);
+		if (err) {
+			fprintf(stderr, "Failed to attach capable_all_bpf to ring buffer\n");
+			goto cleanup;
+		}
+
+	} else {
+		err = capable_std_init(&skel_std);
+		if (err)
+			goto cleanup;
+		err = ring_buffer__add(rb, bpf_map__fd(skel_std->maps.rb), handle_cap_check, cm);
+		if (err) {
+			fprintf(stderr, "Failed to attach capable_std_bpf to ring buffer\n");
+			goto cleanup;
+		}
+	}
 
 	if (err)
 		goto cleanup;

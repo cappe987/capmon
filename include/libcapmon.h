@@ -72,8 +72,8 @@ int run_monitor_mode(struct capmon *cm);
 
 /* libcapmon.c */
 int filter_create(struct capmon *cm, enum filtertypes type, char *optarg);
-bool filter_match_entry(struct capmon *cm, const struct event *e);
-void stats_add_cap(struct capmon *cm, const struct event *e);
+bool filter_match_entry(struct capmon *cm, const struct event_cap_check *e);
+void stats_add_cap(struct capmon *cm, const struct event_cap_check *e);
 void stats_print_summary(struct capmon *cm);
 int capmon_init(struct capmon *cm);
 void capmon_destroy(struct capmon *cm);
