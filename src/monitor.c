@@ -7,6 +7,8 @@
 #include <string.h>
 #include <signal.h>
 
+#include <search.h>
+
 #include <bpf/libbpf.h>
 #include "libcapmon.h"
 #include "capabilities.h"
