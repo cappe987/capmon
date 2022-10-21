@@ -103,8 +103,8 @@ combine the arguments.
 
 ## Using without sudo
 
-To use Capmon without sudo you must assign `CAP_DAC_OVERRIDE` to yourself and to
-`capmon`. Check out [this post by
+To use Capmon without sudo you must assign `CAP_DAC_OVERRIDE` and
+`CAP_SYS_ADMIN` to yourself and to `capmon`. Check out [this post by
 Troglobit](https://troglobit.com/2016/12/11/a-life-without-sudo/) on how to use
 capabilities.
 
