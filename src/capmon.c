@@ -95,6 +95,7 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 			}
 			break;
 		case '?':
+			err = EINVAL;
 			goto out;
 		}
 	}

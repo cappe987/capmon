@@ -181,7 +181,7 @@ int capmon_init(struct capmon *cm)
 	LIST_INIT(&cm->process_stats);
 	cm->pid_tree = NULL;
 
-	cm->summary = SUMMARY_NONE;
+	cm->summary = SUMMARY_PID;
 	cm->in_background = false;
 	cm->cap_all = false;
 
