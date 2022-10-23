@@ -15,6 +15,14 @@ static inline void set_bit(int bit, __u32 *bitmap)
 	bitmap[bit/32] |= 1 << (bit % 32);
 }
 
+static inline void union_bitmap(__u32 *dest, const __u32 *src, int nr_bits)
+{
+	/* Subtract 1 since 32s bit should count only for one u32 */
+	for (int i = 0; i <= (nr_bits-1)/32; i++) {
+		dest[i] |= src[i];
+	}
+}
+
 static inline void clear_bit(int bit, __u32 *bitmap)
 {
 	bitmap[bit/32] &= ~(1 << (bit % 32));
