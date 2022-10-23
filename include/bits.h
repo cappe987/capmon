@@ -15,6 +15,16 @@ static inline void set_bit(int bit, __u32 *bitmap)
 	bitmap[bit/32] |= 1 << (bit % 32);
 }
 
+static inline void clear_bit(int bit, __u32 *bitmap)
+{
+	bitmap[bit/32] &= ~(1 << (bit % 32));
+}
+
+static inline bool test_bit(int bit, const __u32 *bitmap)
+{
+	return bitmap[bit/32] & 1 << (bit % 32);
+}
+
 static inline void union_bitmap(__u32 *dest, const __u32 *src, int nr_bits)
 {
 	/* Subtract 1 since 32s bit should count only for one u32 */
@@ -23,15 +33,12 @@ static inline void union_bitmap(__u32 *dest, const __u32 *src, int nr_bits)
 	}
 }
 
-static inline void clear_bit(int bit, __u32 *bitmap)
+static inline void zero_bitmap(__u32 *bitmap, int nr_bits)
 {
-	bitmap[bit/32] &= ~(1 << (bit % 32));
+	/* Subtract 1 since 32s bit should count only for one u32 */
+	for (int i = 0; i <= (nr_bits-1)/32; i++) {
+		bitmap[i] &= 0;
+	}
 }
-
-static inline bool test_bit(int bit, __u32 *bitmap)
-{
-	return bitmap[bit/32] & 1 << (bit % 32);
-}
-
 
 #endif /* _CAPMON_BITS_H_ */
