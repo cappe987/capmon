@@ -42,12 +42,14 @@ struct filter {
 	char comm_pattern[REGEX_LEN];
 };
 
+#define NUM_CAPS (CAP_LAST_CAP+1)
+
 /* TODO: Replace with hash table later? */
 struct process_stats {
 	LIST_ENTRY(process_stats) entries;
 	char comm[COMM_NAME_LEN];
 	int pid;
-	DECLARE_BITMAP(capabilities, CAP_LAST_CAP+1);
+	DECLARE_BITMAP(capabilities, NUM_CAPS);
 };
 
 typedef void* tree;
@@ -70,9 +72,11 @@ struct skeletons {
 	struct capable_all_bpf *skel_all;
 };
 
+LIST_HEAD(stats, process_stats);
+
 struct capmon {
 	LIST_HEAD(filters, filter) filters;
-	LIST_HEAD(stats, process_stats) process_stats;
+	struct stats process_stats;
 	tree pid_tree;
 	enum summary_mode summary;
 	enum run_mode run_mode;
@@ -93,6 +97,7 @@ int  skel_setup(struct capmon *cm, struct ring_buffer **rb, handler_t cap_handle
 void skel_destroy(struct capmon *cm, struct ring_buffer **rb);
 int  filter_create(struct capmon *cm, enum filtertypes type, char *optarg);
 bool filter_match_entry(struct capmon *cm, const struct event_cap_check *e);
+void stats_union_cap(struct stats *list, enum summary_mode mode, const struct process_stats p);
 void stats_add_cap(struct capmon *cm, const struct event_cap_check *e);
 void stats_print_summary(struct capmon *cm);
 int  pid_cmp(const void *a, const void *b);

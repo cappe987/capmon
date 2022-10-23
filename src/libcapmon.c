@@ -157,19 +157,29 @@ bool filter_match_entry(struct capmon *cm, const struct event_cap_check *e)
 	return (!pid_filter || pid_match) && (!cap_filter || cap_match) && (!comm_filter || comm_match);
 }
 
-void stats_add_cap(struct capmon *cm, const struct event_cap_check *e)
+struct process_stats event_to_stats(const struct event_cap_check *e)
 {
-	struct process_stats *ps;
+	struct process_stats stat;
+	stat.pid = e->pid;
+	zero_bitmap(stat.capabilities, NUM_CAPS);
+	set_bit(e->cap, stat.capabilities);
+	strncpy(stat.comm, e->comm, COMM_NAME_LEN);
+	return stat;
+}
 
-	if (cm->summary == SUMMARY_NONE)
+void stats_union_cap(struct stats *list, enum summary_mode mode, const struct process_stats ps)
+{
+	struct process_stats *iter;
+
+	if (mode == SUMMARY_NONE)
 		return;
 
-	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
-		if (cm->summary == SUMMARY_COMM && strcmp(e->comm, ps->comm) == 0) {
-			set_bit(e->cap, ps->capabilities);
+	for (iter = list->lh_first; iter != NULL; iter = iter->entries.le_next) {
+		if (mode == SUMMARY_COMM && strcmp(ps.comm, iter->comm) == 0) {
+			union_bitmap(iter->capabilities, ps.capabilities, NUM_CAPS);
 			return;
-		} else if (cm->summary == SUMMARY_PID && e->pid == ps->pid) {
-			set_bit(e->cap, ps->capabilities);
+		} else if (mode == SUMMARY_PID && ps.pid == iter->pid) {
+			union_bitmap(iter->capabilities, ps.capabilities, NUM_CAPS);
 			return;
 		}
 	}
@@ -177,17 +187,21 @@ void stats_add_cap(struct capmon *cm, const struct event_cap_check *e)
 	/* New process comm/pid */
 
 	/* TODO: propagate error */
-	ps = calloc(1, sizeof(struct process_stats));
-	if (!ps)
+	iter = calloc(1, sizeof(struct process_stats));
+	if (!iter)
 		return;
 
-	if (cm->summary == SUMMARY_PID)
-		ps->pid = e->pid;
+	if (mode == SUMMARY_PID)
+		iter->pid = ps.pid;
 
-	strncpy(ps->comm, e->comm, COMM_NAME_LEN);
+	strncpy(iter->comm, ps.comm, COMM_NAME_LEN);
+	union_bitmap(iter->capabilities, ps.capabilities, NUM_CAPS);
+	LIST_INSERT_HEAD(list, iter, entries);
+}
 
-	set_bit(e->cap, ps->capabilities);
-	LIST_INSERT_HEAD(&cm->process_stats, ps, entries);
+void stats_add_cap(struct capmon *cm, const struct event_cap_check *e)
+{
+	stats_union_cap(&cm->process_stats, cm->summary, event_to_stats(e));
 }
 
 void stats_print_summary(struct capmon *cm)
