@@ -95,6 +95,7 @@ set(SRC_FILES
 	capabilities.c
 	libcapmon.c
 	monitor.c
+	proctrack.c
 )
 list(TRANSFORM SRC_FILES PREPEND "${PROJECT_SOURCE_DIR}/src/")
 

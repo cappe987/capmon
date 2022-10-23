@@ -41,6 +41,7 @@ void usage(void)
 
 int parse_args(struct capmon *cm, int argc, char **argv)
 {
+	bool summary_mode_set = false;
 	int err = 0;
 	char ch;
 
@@ -48,13 +49,14 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 		{"version",     no_argument, NULL,            'v' },
 		{ "help",       no_argument, NULL,            'h' },
 		{ "all",        no_argument, NULL,            'a' },
+		{ "monitor",    no_argument, NULL,            'm' },
 		{ "pid",        no_argument, NULL,            'p' },
 		{ "capability", no_argument, NULL,            'c' },
 		{ "summary",    no_argument, NULL,            's' },
 		{NULL,          0,           NULL,            0   }
 	};
 
-	while ((ch = getopt_long(argc, argv, "vhap:c:n:s:", long_options, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "vhamp:c:n:s:", long_options, NULL)) != -1) {
 
 		switch (ch) {
 		case 'v':
@@ -68,6 +70,11 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 		case 'a':
 			cm->cap_all = true;
 			break;
+		case 'm':
+			cm->run_mode = RUNMODE_MONITOR;
+			if (!summary_mode_set)
+				cm->summary = false;
+			break;
 		case 'p':
 			err = filter_create(cm, FILTER_PID, optarg);
 			if (err)
@@ -79,7 +86,7 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 				goto out;
 			break;
 		case 's':
-			if (cm->summary != SUMMARY_NONE) {
+			if (summary_mode_set) {
 				ERR("summary mode already set\n");
 				err = EINVAL;
 				goto out;
@@ -93,6 +100,7 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 				err = EINVAL;
 				goto out;
 			}
+			summary_mode_set = true;
 			break;
 		case '?':
 			err = EINVAL;
@@ -123,7 +131,16 @@ int main(int argc, char **argv)
 
 	/*capmon_print(&capmon);*/
 
-	run_monitor_mode(&capmon);
+	switch (capmon.run_mode) {
+	case RUNMODE_NONE:
+		goto out;
+	case RUNMODE_MONITOR:
+		run_monitor_mode(&capmon);
+		break;
+	case RUNMODE_PROCTRACK:
+		run_proctrack_mode(&capmon);
+		break;
+	}
 
 out:
 	capmon_destroy(&capmon);

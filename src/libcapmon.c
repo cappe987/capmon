@@ -8,6 +8,51 @@
 #include "capabilities.h"
 #include "libcapmon.h"
 
+INIT_BPFOBJ(capable_std)
+INIT_BPFOBJ(capable_all)
+INIT_BPFOBJ(proc_exec)
+
+int skel_setup(struct capmon *cm, struct ring_buffer **rb, handler_t cap_handler, handler_t proc_handler)
+{
+	int err = 0;
+
+	if (cm->cap_all){
+		err = capable_all_init(&cm->skel.skel_all);
+		if (err)
+			return err;
+		*rb = ring_buffer__new(bpf_map__fd(cm->skel.skel_all->maps.rb), cap_handler, cm, NULL);
+	} else {
+		err = capable_std_init(&cm->skel.skel_std);
+		if (err)
+			return err;
+		*rb = ring_buffer__new(bpf_map__fd(cm->skel.skel_std->maps.rb), cap_handler, cm, NULL);
+	}
+	if (!*rb) {
+		fprintf(stderr, "Failed to create ring buffer\n");
+		return -EBUSY;
+	}
+
+	if (cm->run_mode == RUNMODE_PROCTRACK) {
+		proc_exec_init(&cm->skel.skel_exec);
+		err = ring_buffer__add(*rb, bpf_map__fd(cm->skel.skel_exec->maps.rb), proc_handler, cm);
+		if (err)
+			fprintf(stderr, "Failed to attach proc_exec to ring buffer\n");
+	}
+	return err;
+}
+
+void skel_destroy(struct capmon *cm, struct ring_buffer **rb)
+{
+	ring_buffer__free(*rb);
+	if (cm->cap_all)
+		capable_all_bpf__destroy(cm->skel.skel_all);
+	else
+		capable_std_bpf__destroy(cm->skel.skel_std);
+
+	if (cm->run_mode == RUNMODE_PROCTRACK)
+		proc_exec_bpf__destroy(cm->skel.skel_exec);
+}
+
 static void print_filters(struct capmon *cm)
 {
 	struct filter *f;
@@ -164,6 +209,11 @@ void stats_print_summary(struct capmon *cm)
 	}
 }
 
+int pid_cmp(const void *a, const void *b)
+{
+	return *(pid_t*)a - *(pid_t*)b;
+}
+
 void capmon_print(struct capmon *cm)
 {
 	printf("--- CAPMON ---\n");
@@ -180,11 +230,9 @@ int capmon_init(struct capmon *cm)
 	LIST_INIT(&cm->filters);
 	LIST_INIT(&cm->process_stats);
 	cm->pid_tree = NULL;
-
 	cm->summary = SUMMARY_PID;
-	cm->in_background = false;
+	cm->run_mode = RUNMODE_PROCTRACK;
 	cm->cap_all = false;
-
 	return 0;
 }
 
