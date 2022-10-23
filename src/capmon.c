@@ -135,10 +135,22 @@ int main(int argc, char **argv)
 	case RUNMODE_NONE:
 		goto out;
 	case RUNMODE_MONITOR:
-		run_monitor_mode(&capmon);
+		printf("----------------------------------------------\n");
+		printf("PROCESS         | PID    | PPID   | Capability\n");
+		printf("----------------------------------------------\n");
+		err = run_monitor_mode(&capmon);
+		if (err)
+			goto out;
+		printf("\n");
+		stats_print_summary(&capmon);
 		break;
+
 	case RUNMODE_PROCTRACK:
-		run_proctrack_mode(&capmon);
+		err = run_proctrack_mode(&capmon);
+		if (err)
+			goto out;
+		printf("\n");
+		proc_summary(&capmon);
 		break;
 	}
 

@@ -68,9 +68,6 @@ int run_monitor_mode(struct capmon *cm)
 		goto cleanup;
 	
 	/* Process events */
-	printf("----------------------------------------------\n");
-	printf("PROCESS         | PID    | PPID   | Capability\n");
-	printf("----------------------------------------------\n");
 	while (!exiting) {
 		err = ring_buffer__poll(rb, 100 /* timeout, ms */);
 		/* Ctrl-C will cause -EINTR */
@@ -79,13 +76,10 @@ int run_monitor_mode(struct capmon *cm)
 			break;
 		}
 		if (err < 0) {
-			printf("Error polling perf buffer: %d\n", err);
+			ERR("error polling perf buffer: %d\n", err);
 			break;
 		}
 	}
-
-	printf("\n");
-	stats_print_summary(cm);
 
 cleanup:
 	/* Clean up */

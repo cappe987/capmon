@@ -164,9 +164,6 @@ int run_proctrack_mode(struct capmon *cm)
 			break;
 	}
 
-	printf("\n");
-	proc_summary(cm);
-
 cleanup:
 	/* Clean up */
 	skel_destroy(cm, &rb);

@@ -88,6 +88,7 @@ struct capmon {
 int run_monitor_mode(struct capmon *cm);
 
 /* proctrack.c */
+void proc_summary(struct capmon *cm);
 int run_proctrack_mode(struct capmon *cm);
 
 /* libcapmon.c */
