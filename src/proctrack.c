@@ -42,23 +42,19 @@ static int handle_proc_start(void *ctx, void *data, size_t data_sz)
 {
 	const struct event_proc_start *e = data;
 	struct capmon *cm = ctx;
-	void *found;
 	pid_t *pid_p;
+	void *found;
 	UNUSED(data_sz);
 
-	/*printf("Proc pid %d started\n", e->pid);*/
 	found = tfind(&e->pid, &cm->pid_tree, pid_cmp);
 
-	if (found) {
-		/*printf("Pid %d already exists\n", e->pid);*/
+	if (found)
 		return 0; /* Pid already accounted for */
-	}
 
 	/* Pid not found, check if parent is found */
 	found = tfind(&e->ppid, &cm->pid_tree, pid_cmp);
 
 	if (found) {
-		/*printf("Pid %d's parent %d found\n", e->pid, e->ppid);*/
 		/* Parent found, keep track of child */
 		pid_p = malloc(sizeof(pid_t));
 		if (!pid_p) {
@@ -73,9 +69,9 @@ static int handle_proc_start(void *ctx, void *data, size_t data_sz)
 
 void proc_summary(struct capmon *cm)
 {
+	struct process_stats *ps;
 	struct stats name_stats;
 	LIST_INIT(&name_stats);
-	struct process_stats *ps;
 	int cap;
 
 	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {

@@ -122,15 +122,15 @@ out_err:
 
 bool filter_match_entry(struct capmon *cm, const struct event_cap_check *e)
 {
-	struct filter *f;
-	bool pid_filter = false;
-	bool pid_match = false;
-	bool cap_filter = false;
-	bool cap_match = false;
+	bool pid_filter  = false;
+	bool pid_match   = false;
+	bool cap_filter  = false;
+	bool cap_match   = false;
 	bool comm_filter = false;
-	bool comm_match = false;
+	bool comm_match  = false;
 	regmatch_t pmatch[1];
 	size_t nmatch = 1;
+	struct filter *f;
 	int res;
 
 	for (f = cm->filters.lh_first; f != NULL; f = f->entries.le_next) {
@@ -160,6 +160,7 @@ bool filter_match_entry(struct capmon *cm, const struct event_cap_check *e)
 struct process_stats event_to_stats(const struct event_cap_check *e)
 {
 	struct process_stats stat;
+
 	stat.pid = e->pid;
 	zero_bitmap(stat.capabilities, NUM_CAPS);
 	set_bit(e->cap, stat.capabilities);
@@ -244,16 +245,16 @@ int capmon_init(struct capmon *cm)
 	LIST_INIT(&cm->filters);
 	LIST_INIT(&cm->process_stats);
 	cm->pid_tree = NULL;
-	cm->summary = SUMMARY_PID;
+	cm->summary  = SUMMARY_PID;
 	cm->run_mode = RUNMODE_PROCTRACK;
-	cm->cap_all = false;
+	cm->cap_all  = false;
 	return 0;
 }
 
 void capmon_destroy(struct capmon *cm)
 {
-	struct filter *f;
 	struct process_stats *ps;
+	struct filter *f;
 
 	while (cm->filters.lh_first != NULL) {
 		f = cm->filters.lh_first;
