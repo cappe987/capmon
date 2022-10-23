@@ -16,16 +16,13 @@ set(SKEL_DIR include)
 set(BPFOBJECT_DIR obj)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${BPFOBJECT_DIR})
 
-include(ProcessorCount)
-ProcessorCount(N)
-
 # Build vendored libbpf
 include(ExternalProject)
 ExternalProject_Add(libbpf
   PREFIX libbpf
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpftool/libbpf/src
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND COMMAND make -j${N}
+  BUILD_COMMAND COMMAND $(MAKE)
     BUILD_STATIC_ONLY=1
     OBJDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf/libbpf
     DESTDIR=${CMAKE_CURRENT_BINARY_DIR}/libbpf
@@ -42,7 +39,7 @@ ExternalProject_Add(bpftool
   PREFIX bpftool
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bpftool/src
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND COMMAND make -j${N}
+  BUILD_COMMAND COMMAND $(MAKE)
     OUTPUT=${CMAKE_CURRENT_BINARY_DIR}/bpftool/
   BUILD_IN_SOURCE TRUE
   INSTALL_COMMAND ""

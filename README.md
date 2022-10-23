@@ -21,7 +21,7 @@ git submodule update --init --recursive
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
-make
+make -j8
 sudo make install
 ```
 
