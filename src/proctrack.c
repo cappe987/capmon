@@ -73,14 +73,19 @@ static int handle_proc_start(void *ctx, void *data, size_t data_sz)
 
 void proc_summary(struct capmon *cm)
 {
+	struct stats name_stats;
+	LIST_INIT(&name_stats);
 	struct process_stats *ps;
 	int cap;
 
 	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
 		if (!tfind(&ps->pid, &cm->pid_tree, pid_cmp))
 			continue;
+		stats_union_cap(&name_stats, SUMMARY_COMM, *ps);
+	}
 
-		printf("%s %d\n", ps->comm, ps->pid);
+	for (ps = name_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
+		printf("%s\n", ps->comm);
 		for (cap = 0; cap <= CAP_LAST_CAP; cap++)
 			if (test_bit(cap, ps->capabilities))
 				printf("\t%s\n", cap_to_str(cap));
@@ -139,10 +144,11 @@ int run_proctrack_mode(struct capmon *cm)
 		goto cleanup;
 	}
 
-	/**root_pid = system2("/home/casan/test.sh");*/
-	*root_pid = system2("sleep 2 && /home/casan/test.sh");
+	*root_pid = system2("/home/casan/test.sh");
+	/**root_pid = system2("sleep 2 && /home/casan/test.sh");*/
 	/**root_pid = system2("hexend lo -c 100 -i 0.1");*/
 	/**root_pid = system2("firefox");*/
+	/**root_pid = system2("wireshark");*/
 	if (*root_pid < 0) {
 		err = *root_pid;
 		ERR("failed to create fork\n");
@@ -163,7 +169,6 @@ int run_proctrack_mode(struct capmon *cm)
 	}
 
 	printf("\n");
-	/*stats_print_summary(cm);*/
 	proc_summary(cm);
 
 cleanup:
