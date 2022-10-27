@@ -112,21 +112,21 @@ static int OBJ##_init(struct OBJ##_bpf **skel){\
 	/* Load and verify BPF application */\
 	*skel = OBJ##_bpf__open();\
 	if (!skel) {\
-		fprintf(stderr, "Failed to open and load BPF skeleton\n");\
+		ERR("failed to open and load BPF skeleton\n");\
 		return 1;\
 	}\
 \
 	/* Load & verify BPF programs */\
 	err = OBJ##_bpf__load(*skel);\
 	if (err) {\
-		fprintf(stderr, "Failed to load and verify BPF skeleton\n");\
+		ERR("failed to load and verify BPF skeleton\n");\
 		return err;\
 	}\
 \
 	/* Attach tracepoints */\
 	err = OBJ##_bpf__attach(*skel);\
 	if (err) {\
-		fprintf(stderr, "Failed to attach BPF skeleton\n");\
+		ERR("failed to attach BPF skeleton\n");\
 		return err;\
 	}\
 	return 0;\

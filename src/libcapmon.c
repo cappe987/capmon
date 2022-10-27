@@ -28,7 +28,7 @@ int skel_setup(struct capmon *cm, struct ring_buffer **rb, handler_t cap_handler
 		*rb = ring_buffer__new(bpf_map__fd(cm->skel.skel_std->maps.rb), cap_handler, cm, NULL);
 	}
 	if (!*rb) {
-		fprintf(stderr, "Failed to create ring buffer\n");
+		ERR("failed to create ring buffer\n");
 		return -EBUSY;
 	}
 
@@ -36,7 +36,7 @@ int skel_setup(struct capmon *cm, struct ring_buffer **rb, handler_t cap_handler
 		proc_exec_init(&cm->skel.skel_exec);
 		err = ring_buffer__add(*rb, bpf_map__fd(cm->skel.skel_exec->maps.rb), proc_handler, cm);
 		if (err)
-			fprintf(stderr, "Failed to attach proc_exec to ring buffer\n");
+			ERR("failed to attach proc_exec to ring buffer\n");
 	}
 	return err;
 }
