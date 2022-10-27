@@ -5,7 +5,6 @@
 #define _CAPMON_BITS_H_
 
 #include <stdbool.h>
-#include <limits.h>
 #include <linux/types.h>
 
 #define DECLARE_BITMAP(name, bits) __u32 name[(bits/32) + 1]

@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -13,10 +11,6 @@
 #include "libcapmon.h"
 #include "capabilities.h"
 #include "bpf_event.h"
-
-#include "capable_std.skel.h"
-#include "capable_all.skel.h"
-#include "proc_exec.skel.h"
 
 static volatile bool exiting = false;
 

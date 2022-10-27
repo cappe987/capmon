@@ -5,7 +5,6 @@
 #define _CAPMON_LIBCAPMON_H_
 
 #include <stdlib.h>
-#include <linux/types.h>
 #include <linux/capability.h>
 #include <sys/queue.h>
 #include <regex.h>
