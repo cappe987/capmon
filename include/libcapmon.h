@@ -18,11 +18,13 @@
 #include "proc_exec.skel.h"
 
 #define ERR(str, ...) fprintf(stderr, "Error: "str, ##__VA_ARGS__)
+#define NUM_CAPS (CAP_LAST_CAP+1)
 #define UNUSED(x) (void)(x)
 #define NAME_LEN 50
 #define COMM_NAME_LEN 16
 #define CAP_NAME_LEN 22
 #define REGEX_LEN 200
+#define CMD_LEN 1024
 
 enum filtertypes {
 	FILTER_PID,
@@ -40,8 +42,6 @@ struct filter {
 	};
 	char comm_pattern[REGEX_LEN];
 };
-
-#define NUM_CAPS (CAP_LAST_CAP+1)
 
 /* TODO: Replace with hash table later? */
 struct process_stats {
@@ -75,6 +75,7 @@ LIST_HEAD(stats, process_stats);
 
 struct capmon {
 	LIST_HEAD(filters, filter) filters;
+	char proctrack_cmd[CMD_LEN];
 	struct stats process_stats;
 	tree pid_tree;
 	enum summary_mode summary;

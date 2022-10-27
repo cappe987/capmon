@@ -42,7 +42,7 @@ void usage(void)
 int parse_args(struct capmon *cm, int argc, char **argv)
 {
 	bool summary_mode_set = false;
-	int err = 0;
+	int err = 0, cmdlen = 0, arglen = 0;
 	char ch;
 
 	struct option long_options[] = {
@@ -108,10 +108,33 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 		}
 	}
 
-	for (; optind <= argc - 1; optind++) { /* Unmatched arguments are comm filters */
-		err = filter_create(cm, FILTER_COMM, argv[optind]);
-		if (err)
+	if (cm->run_mode == RUNMODE_MONITOR) {
+		for (; optind <= argc - 1; optind++) { /* Unmatched arguments are comm filters */
+			err = filter_create(cm, FILTER_COMM, argv[optind]);
+			if (err)
+				goto out;
+		}
+	} else if (cm->run_mode == RUNMODE_PROCTRACK) {
+		for (; optind <= argc - 1; optind++) {
+			arglen = strlen(argv[optind]);
+			if (cmdlen + arglen >= CMD_LEN-1) {
+				ERR("input command too long\n");
+				err = -EINVAL;
+				goto out;
+			}
+			if (cmdlen > 0) {
+				strcat(cm->proctrack_cmd, " ");
+				cmdlen += 1;
+			}
+			strcat(cm->proctrack_cmd, argv[optind]);
+			cmdlen += arglen;
+
+		}
+		if (cmdlen == 0) {
+			ERR("no command provided\n");
+			err = -EINVAL;
 			goto out;
+		}
 	}
 
 out:
@@ -120,7 +143,7 @@ out:
 
 int main(int argc, char **argv)
 {
-	struct capmon capmon;
+	struct capmon capmon = { 0 };
 	int err = 0;
 
 	capmon_init(&capmon);

@@ -134,11 +134,7 @@ int run_proctrack_mode(struct capmon *cm)
 		goto cleanup;
 	}
 
-	*root_pid = system2("/home/casan/test.sh");
-	/**root_pid = system2("sleep 2 && /home/casan/test.sh");*/
-	/**root_pid = system2("hexend lo -c 100 -i 0.1");*/
-	/**root_pid = system2("firefox");*/
-	/**root_pid = system2("wireshark");*/
+	*root_pid = system2(cm->proctrack_cmd);
 	if (*root_pid < 0) {
 		err = *root_pid;
 		ERR("failed to create fork\n");
@@ -146,12 +142,10 @@ int run_proctrack_mode(struct capmon *cm)
 	}
 
 	tsearch(root_pid, &cm->pid_tree, pid_cmp);
-	/*printf("Add initial pid %d\n", *root_pid);*/
 
 	/* Process events */
 	while (true) {
 		err = ring_buffer__poll(rb, 100 /* timeout, ms */);
-		/*printf("Polling...\n");*/
 		/* Ctrl-C will cause -EINTR */
 		status = waitpid(*root_pid, NULL, WNOHANG);
 		if (status != 0) /* Process exited, but we don't care how */
