@@ -102,6 +102,7 @@ void stats_union_cap(struct stats *list, enum summary_mode mode, const struct pr
 void stats_add_cap(struct capmon *cm, const struct event_cap_check *e);
 void stats_print_summary(struct capmon *cm);
 int  pid_cmp(const void *a, const void *b);
+void capmon_print(struct capmon *cm);
 int  capmon_init(struct capmon *cm);
 void capmon_destroy(struct capmon *cm);
 
