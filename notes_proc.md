@@ -1,3 +1,5 @@
+<!--SPDX-License-Identifier: GPL-2.0-only-->
+<!--SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>-->
 # proc_exec notes
 
 Have the started command take the place of the main process and have Capmon
