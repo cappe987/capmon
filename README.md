@@ -17,13 +17,12 @@ see the capability it fails on.
 # Installation
 
 ```
-git submodule update --init --recursive
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j8
+make
 sudo make install
 ```
+The Makefile is a wrapper around CMake that will fetch the submodules and
+output any build artifacts into the `build/` directory. For contributing, check
+out [CONTRIBUTING.md](doc/CONTRIBUTING.md).
 
 ## Build dependencies (unsure about the kernel dependencies)
 

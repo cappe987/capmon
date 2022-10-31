@@ -106,6 +106,7 @@ int filter_create(struct capmon *cm, enum filtertypes type, char *optarg)
 			ERR("Invalid regex pattern, returning %d\n", err);
 			goto out_regex_err;
 		}
+		#pragma GCC diagnostic ignored "-Wstringop-truncation"
 		strncpy(filter->comm_pattern, optarg, REGEX_LEN);
 		break;
 	}
