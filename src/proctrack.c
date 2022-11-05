@@ -66,6 +66,7 @@ void proc_summary(struct capmon *cm)
 	struct process_stats *ps;
 	struct stats name_stats;
 	LIST_INIT(&name_stats);
+	bool has_cap;
 	int cap;
 
 	for (ps = cm->process_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
@@ -77,8 +78,10 @@ void proc_summary(struct capmon *cm)
 	for (ps = name_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
 		printf("%s\n", ps->comm);
 		for (cap = 0; cap <= CAP_LAST_CAP; cap++)
-			if (test_bit(cap, ps->capabilities))
-				printf("\t%s\n", cap_to_str(cap));
+			if (test_bit(cap, ps->capabilities)) {
+				has_cap = test_bit(cap, ps->has_capability);
+				printf("\t%-22s %s\n", cap_to_str(cap), has_cap ? "true" : "false");
+			}
 		if (ps->entries.le_next)
 			printf("\n");
 	}

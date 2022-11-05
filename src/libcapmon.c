@@ -165,6 +165,8 @@ struct process_stats event_to_stats(const struct event_cap_check *e)
 	stat.pid = e->pid;
 	zero_bitmap(stat.capabilities, NUM_CAPS);
 	set_bit(e->cap, stat.capabilities);
+	if (e->has_cap)
+		set_bit(e->cap, stat.has_capability);
 	strncpy(stat.comm, e->comm, COMM_NAME_LEN);
 	return stat;
 }
@@ -198,6 +200,7 @@ void stats_union_cap(struct stats *list, enum summary_mode mode, const struct pr
 
 	strncpy(iter->comm, ps.comm, COMM_NAME_LEN);
 	union_bitmap(iter->capabilities, ps.capabilities, NUM_CAPS);
+	union_bitmap(iter->has_capability, ps.has_capability, NUM_CAPS);
 	LIST_INSERT_HEAD(list, iter, entries);
 }
 

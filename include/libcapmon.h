@@ -49,6 +49,7 @@ struct process_stats {
 	char comm[COMM_NAME_LEN];
 	int pid;
 	DECLARE_BITMAP(capabilities, NUM_CAPS);
+	DECLARE_BITMAP(has_capability, NUM_CAPS);
 };
 
 typedef void* tree;
