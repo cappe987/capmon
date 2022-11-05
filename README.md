@@ -52,6 +52,9 @@ capmon ip link set dev eth0 down
 See [Monitor mode documentation](doc/monitor.md) for usage of the legacy monitor mode.
 
 ## Using without sudo
+It is recommended to give Capmon the capabilities it needs. Running it with
+sudo will pass sudo rights to any child processes, preventing the return value
+of the cap check to be correct. 
 
 To use Capmon without sudo you must assign `CAP_DAC_OVERRIDE` and
 `CAP_SYS_ADMIN` to yourself and to `capmon`. Check out [this post by
