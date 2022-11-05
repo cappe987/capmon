@@ -11,8 +11,10 @@ find out what they require. Start `capmon` and run your program without sudo to
 see the capability it fails on.
 
 > Note: I do not know much about how capabilities works or how it's used in the
-> kernel. Capmon might show more than required. I do not yet know why the
-> kernel does all the extra checks.
+> kernel. Capmon might show more than required. Some capability checks are not
+> necessarily required for a program to run. One such example is `CAP_SYS_NICE`,
+> where a program want to increase its priority but it's often not a strict
+> requirement for functioning. Some capabilities are also subsets of others.
 
 # Installation
 
