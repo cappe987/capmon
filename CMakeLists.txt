@@ -117,10 +117,10 @@ install(TARGETS capmon
         RUNTIME DESTINATION bin)
 
 add_custom_target(dist
-	COMMAND 
+	COMMAND
 	mkdir "-p" "${PROJECT_NAME_VERSION}"
 	COMMAND
-	cp 
+	cp
 	"-r"
 	"../CMakeLists.txt"
 	"../LICENSE"
@@ -133,9 +133,9 @@ add_custom_target(dist
 	"../bpftool"
 	"../tools"
 	"${PROJECT_NAME_VERSION}"
-	COMMAND 
-	tar 
-	"-cvzf" 
+	COMMAND
+	tar
+	"-cvzf"
 	"${PROJECT_NAME_VERSION}.tar.gz"
 	"${PROJECT_NAME_VERSION}/"
 )
@@ -155,3 +155,14 @@ add_custom_target(distclean
 	COMMAND
 	rm -r ${PROJECT_BINARY_DIR}/libbpf
 )
+
+# ==== TEST ====
+add_custom_target(test
+	COMMAND
+	sudo setcap cap_dac_override,cap_sys_admin+ep ${PROJECT_BINARY_DIR}/capmon
+	COMMAND
+	#unshare -r -n ${PROJECT_SOURCE_DIR}/test/test.sh ${PROJECT_BINARY_DIR}/capmon
+	${PROJECT_SOURCE_DIR}/test/test.sh ${PROJECT_BINARY_DIR}/capmon
+	DEPENDS ${PROJECT_BINARY_DIR}/capmon
+	)
+
