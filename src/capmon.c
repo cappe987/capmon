@@ -21,9 +21,8 @@ void usage(void)
 	      "        Command that will be run and tracked.\n"
 	      "\n"
 	      "PATTERNS:\n"
-	      "        Only applicable in monitor mode. Filter by process name. Supports POSIX-Extended\n"
-	      "        Regular Expressions (tip: use quotation marks to avoid the shell interpreting\n"
-	      "        as globbing).\n"
+	      "        Filter by process name. Supports POSIX-Extended Regular Expressions\n"
+	      "        (tip: use quotation marks to avoid the shell interpreting as globbing).\n"
 	      "\n"
 	      "OPTIONS:\n"
 	      "        -a, --all\n"
@@ -131,7 +130,6 @@ int parse_args(struct capmon *cm, int argc, char **argv)
 			}
 			strcat(cm->proctrack_cmd, argv[optind]);
 			cmdlen += arglen;
-
 		}
 		if (cmdlen == 0) {
 			ERR("no command provided\n");

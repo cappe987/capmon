@@ -17,7 +17,7 @@
 #include "capable_all.skel.h"
 #include "proc_exec.skel.h"
 
-#define ERR(str, ...) fprintf(stderr, "Error: "str, ##__VA_ARGS__)
+#define ERR(str, ...) fprintf(stderr, "capmon: "str, ##__VA_ARGS__)
 #define NUM_CAPS (CAP_LAST_CAP+1)
 #define UNUSED(x) (void)(x)
 #define NAME_LEN 50

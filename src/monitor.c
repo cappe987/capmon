@@ -66,7 +66,7 @@ int run_monitor_mode(struct capmon *cm)
 	err = skel_setup(cm, &rb, handle_cap_check, NULL);
 	if (err)
 		goto cleanup;
-	
+
 	/* Process events */
 	while (!exiting) {
 		err = ring_buffer__poll(rb, 100 /* timeout, ms */);
