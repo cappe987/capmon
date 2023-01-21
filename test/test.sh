@@ -5,7 +5,7 @@ passed=0
 
 echo "[TEST]"
 
-OUT=$($capmon ip tuntap add test-capmon-tap mode tap)
+OUT=$($capmon "ip tuntap add test-capmon-tap mode tap 2>/dev/null")
 ip link del dev test-capmon-tap 2>/dev/null
 
 if echo "$OUT" | grep -q "CAP_NET_ADMIN"; then
