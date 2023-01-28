@@ -182,9 +182,11 @@ void stats_union_cap(struct stats *list, enum summary_mode mode, const struct pr
 	for (iter = list->lh_first; iter != NULL; iter = iter->entries.le_next) {
 		if (mode == SUMMARY_COMM && strcmp(ps.comm, iter->comm) == 0) {
 			union_bitmap(iter->capabilities, ps.capabilities, NUM_CAPS);
+			union_bitmap(iter->has_capability, ps.has_capability, NUM_CAPS);
 			return;
 		} else if (mode == SUMMARY_PID && ps.pid == iter->pid) {
 			union_bitmap(iter->capabilities, ps.capabilities, NUM_CAPS);
+			union_bitmap(iter->has_capability, ps.has_capability, NUM_CAPS);
 			return;
 		}
 	}
