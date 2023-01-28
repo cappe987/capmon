@@ -162,7 +162,7 @@ add_custom_target(test
 	sudo setcap cap_dac_override,cap_sys_admin+ep ${PROJECT_BINARY_DIR}/capmon
 	COMMAND
 	#unshare -r -n ${PROJECT_SOURCE_DIR}/test/test.sh ${PROJECT_BINARY_DIR}/capmon
-	${PROJECT_SOURCE_DIR}/test/test.sh ${PROJECT_BINARY_DIR}/capmon
+	${PROJECT_SOURCE_DIR}/test/main.sh ${PROJECT_BINARY_DIR}/capmon
 	DEPENDS ${PROJECT_BINARY_DIR}/capmon
 	)
 
