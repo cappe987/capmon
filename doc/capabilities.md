@@ -13,7 +13,7 @@ have higher priority, but many will also run fine anyways. Failing this check
 may be completely fine.
 
 `CAP_SYS_ADMIN` is a superset of `CAP_BPF`, `CAP_CHECKPOINT_RESTORE`, and
-`CAP_PERFMON`. Avoid using this if you can (manpage calls it "the new root").
+`CAP_PERFMON`. Avoid using this if you can (`capabilities(7)` calls it "the new root").
 Unfortunately, Capmon appears to requires this.
 
 `CAP_DAC_OVERRIDE` is a superset of `CAP_DAC_READ_SEARCH`, as former encompasses

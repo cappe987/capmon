@@ -14,44 +14,44 @@ such an example.
 
 Start monitoring capability checks.
 ```
-capmon
+capmon -m
 ```
 
 Filter by process name. Supports POSIX-Extended Regular Expressions (tip: use
 quotation marks to avoid the shell interpreting as globbing).
 ```
-capmon tcpdump trafgen
+capmon -m tcpdump trafgen
 ```
 
 Filter by process ID
 ```
-capmon -p 13424
+capmon -m -p 13424
 ```
 
 Filter by capability
 ```
-capmon -c CAP_NET_RAW
+capmon -m -c CAP_NET_RAW
 ```
 
 Summary mode. On exit, output a summary of which capabilities each process has
 accessed. Either grouped by process name or by pid.
 ```
-capmon -s pid
-capmon -s name
+capmon -m -s pid
+capmon -m -s name
 ```
 
 Listen to ALL capability checks. By default it only listens to the functions
 `ns_capable` and `capable_wrt_inode_uidgid`. This listens directly to the
-`cap_capable` function.
+`cap_capable` function. This flag is available in primary mode as well.
 ```
-capmon -a
+capmon -m -a
 ```
 
 All the above arguments can be combined freely. Multiple filters can be used.
 Filters of the same type are treated as `OR` operations. Filters of different
 types are treated as `AND` operations. For example, the command
 ```
-capmon tcpdump trafgen -c CAP_NET_RAW
+capmon -m tcpdump trafgen -c CAP_NET_RAW
 ```
 is interpreted as
 ```
@@ -66,7 +66,7 @@ to ALL capability checks, will do a summary at the end based on the names
 capability being checked is also `CAP_NET_RAW` or `CAP_NET_ADMIN`. So it has to
 belong to either of the names AND be one of those two capabilities.
 ```
-capmon tcpdump trafgen -a -s name -c CAP_NET_RAW -c CAP_NET_ADMIN
+capmon -m tcpdump trafgen -a -s name -c CAP_NET_RAW -c CAP_NET_ADMIN
 ```
 This particular combination may not be very useful, but it shows how you can
 combine the arguments.
