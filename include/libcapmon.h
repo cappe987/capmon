@@ -26,6 +26,9 @@
 #define REGEX_LEN 200
 #define CMD_LEN 1024
 
+#define PASS_STR "\033[32m\033[1mPASS\033[0m"
+#define FAIL_STR "\033[31m\033[1mFAIL\033[0m"
+
 enum filtertypes {
 	FILTER_PID,
 	FILTER_CAP,

@@ -76,11 +76,11 @@ void proc_summary(struct capmon *cm)
 	}
 
 	for (ps = name_stats.lh_first; ps != NULL; ps = ps->entries.le_next) {
-		printf("%s\n", ps->comm);
+		printf("[%s]\n", ps->comm);
 		for (cap = 0; cap <= CAP_LAST_CAP; cap++)
 			if (test_bit(cap, ps->capabilities)) {
 				has_cap = test_bit(cap, ps->has_capability);
-				printf("\t%-22s %s\n", cap_to_str(cap), has_cap ? "true" : "false");
+				printf("- [%s] %-22s\n", has_cap ? PASS_STR : FAIL_STR, cap_to_str(cap));
 			}
 		if (ps->entries.le_next)
 			printf("\n");
