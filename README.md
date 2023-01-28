@@ -19,6 +19,7 @@ more. Rinse and repeat until command runs successfully.
   - [Run dependencies](#run-dependencies)
 - [Usage](#usage)
   - [Using without sudo](#using-without-sudo)
+- [Contributing](#contributing)
 - [Issues](#issues)
 
 
@@ -32,8 +33,7 @@ make
 sudo make install
 ```
 The Makefile is a wrapper around CMake that will fetch the submodules and
-output any build artifacts into the `build/` directory. For contributing, check
-out [CONTRIBUTING.md](doc/CONTRIBUTING.md).
+output any build artifacts into the `build/` directory.
 
 
 
@@ -85,6 +85,15 @@ To use Capmon without sudo you must assign `CAP_DAC_OVERRIDE` and
 `CAP_SYS_ADMIN` to yourself and to `capmon`. Check out [this post by
 Troglobit](https://troglobit.com/2016/12/11/a-life-without-sudo/) on how to use
 capabilities.
+
+
+
+<a name="contributing"/>
+
+# Contributing
+
+For more detailed explanation on building it and how it works see
+[CONTRIBUTING.md](docs/CONTRIBUTING.md)
 
 
 
