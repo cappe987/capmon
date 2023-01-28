@@ -164,6 +164,7 @@ struct process_stats event_to_stats(const struct event_cap_check *e)
 
 	stat.pid = e->pid;
 	zero_bitmap(stat.capabilities, NUM_CAPS);
+	zero_bitmap(stat.has_capability, NUM_CAPS);
 	set_bit(e->cap, stat.capabilities);
 	if (e->has_cap)
 		set_bit(e->cap, stat.has_capability);
