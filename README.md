@@ -93,7 +93,7 @@ capabilities.
 # Contributing
 
 For more detailed explanation on building it and how it works see
-[CONTRIBUTING.md](docs/CONTRIBUTING.md)
+[CONTRIBUTING.md](doc/CONTRIBUTING.md)
 
 
 
