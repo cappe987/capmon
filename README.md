@@ -1,6 +1,6 @@
 <!---
 SPDX-License-Identifier: GPL-2.0-only
-SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
+SPDX-FileCopyrightText: 2023 Casper Andersson <casper.casan@gmail.com>
 -->
 
 # capmon - Linux Capabilities checker/monitor
