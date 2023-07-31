@@ -1,10 +1,13 @@
+<!--SPDX-License-Identifier: GPL-2.0-only-->
+<!--SPDX-FileCopyrightText: 2023 Casper Andersson <casper.casan@gmail.com>-->
+
 # Contributing
 
 Anyone interested is free to contribute. I'm happy to help out with what I can.
 This is just a hobby project that I made when learning about capabilities
 because I found it difficult to know what different programs required.
 
-# Build instructions
+## Build instructions
 
 Build instructions for development. The Makefile is just a wrapper to make it easier to use.
 ```
@@ -18,14 +21,14 @@ make -j8
 Replace `-j8` with however many cores your computer has. The first build takes
 some time due to having to build bpftool and libbpf.
 
-# How it works
+## How it works
 
 There are two modes. Proccess tracking (primary mode) and monitor (legacy
 mode). I originally made the monitor mode inspired by `tcpdump`. It works well
 for its purpose, but it's not the easiest to use if you don't fully know what
 your program does, since it monitors everything.
 
-## Process tracking
+### Process tracking
 Process tracking runs the provided command and tracks its process ID (PID), as
 well as any subprocesses spawned by it. This allows filtering for only the
 desired processes. But there are cases where this does not work. It currently
