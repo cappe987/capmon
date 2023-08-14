@@ -114,9 +114,11 @@ void capmon_destroy(struct capmon *cm);
 static int OBJ##_init(struct OBJ##_bpf **skel){\
 	int err;\
 \
+	if (skel == NULL) \
+		return -EINVAL; \
 	/* Load and verify BPF application */\
 	*skel = OBJ##_bpf__open();\
-	if (!skel) {\
+	if (*skel == NULL) {\
 		ERR("failed to open and load BPF skeleton\n");\
 		return 1;\
 	}\
