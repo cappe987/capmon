@@ -132,6 +132,8 @@ add_custom_target(dist
 	"../src"
 	"../bpftool"
 	"../tools"
+	"../doc"
+	"../test"
 	"${PROJECT_NAME_VERSION}"
 	COMMAND
 	tar
