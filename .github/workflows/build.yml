@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 # SPDX-FileCopyrightText: 2022 Casper Andersson <casper.casan@gmail.com>
-name: Bob the Builder
+name: CI
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -36,3 +36,10 @@ jobs:
         run: |
           cd build
           make test
+  lint:
+    name: REUSE Compliance Check
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: REUSE Lint
+        uses: fsfe/reuse-action@v2
