@@ -36,7 +36,7 @@ capmon '<cmd>'
 
 For example:
 ```sh
-capmon 'ip link netns add test'
+capmon 'ip netns add test'
 ```
 
 It is recommended to enclose the command in quotes to avoid the shell from doing
